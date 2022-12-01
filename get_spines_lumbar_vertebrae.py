@@ -5,7 +5,7 @@ import json
 def get_spines_with_lumbar_vertebrae(root_folder, file):
     # gather all of the json files to be able to check for lumbar vertebrae
 
-    #TODO get here the version that looks iteratively for files
+    #TODO get here the version that looks recursively for files
     filenames_json = glob(os.path.join(root_folder, '*.json'))
 
     lumbar_vertebreae_file = open(file, "w")
