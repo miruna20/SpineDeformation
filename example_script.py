@@ -1,81 +1,61 @@
-import Sofa.Core
-import SofaRuntime
-SofaRuntime.importPlugin("SofaComponentAll")
-
-def createScene(rootNode):
-        rootNode.addObject("OglGrid", nbSubdiv=10, size=1000)
-
-        rootNode.findData('gravity').value=[0.0,-981.0,0.0];
-        rootNode.findData('dt').value=0.01
-
-        confignode = rootNode.addChild("Config")
-        confignode.addObject('RequiredPlugin', name="SofaMiscCollision", printLog=False)
-        confignode.addObject('RequiredPlugin', name="SofaPython3", printLog=False)
-        confignode.addObject('OglSceneFrame', style="Arrows", alignment="TopRight")
+# Required import for python
+import Sofa
 
 
-        #Collision function
+# Choose in your script to activate or not the GUI
+USE_GUI = False
 
-        rootNode.addObject('DefaultPipeline')
-        rootNode.addObject('FreeMotionAnimationLoop')
-        rootNode.addObject('GenericConstraintSolver', tolerance="1e-6", maxIterations="1000")
-        rootNode.addObject('BruteForceDetection')
-        rootNode.addObject('RuleBasedContactManager', responseParams="mu="+str(0.0), name='Response', response='FrictionContact')
-        rootNode.addObject('LocalMinDistance', alarmDistance=10, contactDistance=5, angleCone=0.01)
 
-        ### Mechanical model
+def main():
+    import SofaRuntime
+    import Sofa.Gui
+    # Make sure to load all SOFA libraries
+    SofaRuntime.importPlugin("Sofa.Component.StateContainer")
+    SofaRuntime.importPlugin("SofaOpenglVisual")
 
-        totalMass = 1.0
-        volume = 1.0
-        inertiaMatrix=[1., 0., 0., 0., 1., 0., 0., 0., 1.]
+    #Create the root node
+    root = Sofa.Core.Node("root")
+    # Call the below 'createScene' function to create the scene graph
+    createScene(root)
+    Sofa.Simulation.init(root)
 
-        #Creating the floor
-        floor = rootNode.addChild("floor")
+    if not USE_GUI:
+        for iteration in range(10):
+            Sofa.Simulation.animate(root, root.dt.value)
+    else:
+        # Find out the supported GUIs
+        print ("Supported GUIs are: " + Sofa.Gui.GUIManager.ListSupportedGUI(","))
+        # Launch the GUI (qt or qglviewer)
+        Sofa.Gui.GUIManager.Init("myscene", "qglviewer")
+        Sofa.Gui.GUIManager.createGUI(root, __file__)
+        Sofa.Gui.GUIManager.SetDimension(1080, 1080)
+        # Initialization of the scene will be done here
+        Sofa.Gui.GUIManager.MainLoop(root)
+        Sofa.Gui.GUIManager.closeGUI()
+        print("GUI was closed")
 
-        floor.addObject('MechanicalObject', name="mstate", template="Rigid3", translation2=[0.0,-300.0,0.0], rotation2=[0., 0., 0.], showObjectScale=5.0)
+    print("Simulation is done.")
 
-        floor.addObject('UniformMass', name="mass", vertexMass=[totalMass, volume, inertiaMatrix[:]])
-        floorCollis = floor.addChild('collision')
-        floorCollis.addObject('MeshObjLoader', name="loader", filename="mesh/floor.obj", triangulate="true", scale=5.0)
-        floorCollis.addObject('MeshTopology', src="@loader")
-        floorCollis.addObject('MechanicalObject')
-        floorCollis.addObject('TriangleCollisionModel', moving=False, simulated=False)
-        floorCollis.addObject('LineCollisionModel', moving=False, simulated=False)
-        floorCollis.addObject('PointCollisionModel', moving=False, simulated=False)
 
-        floorCollis.addObject('RigidMapping')
+# Function called when the scene graph is being created
+def createScene(root):
+    # Scene must now include a VisualLoop
+    root.addObject('DefaultVisualManagerLoop')
 
-        #### visualization
-        floorVisu = floor.addChild("VisualModel")
-        floorVisu.loader = floorVisu.addObject('MeshObjLoader', name="loader", filename="mesh/floor.obj")
-        floorVisu.addObject('OglModel', name="model", src="@loader", scale3d=[5.0]*3, color=[1., 1., 0.], updateNormals=False)
-        floorVisu.addObject('RigidMapping')
+    # Scene must now include a AnimationLoop
+    root.addObject('DefaultAnimationLoop')
 
-        #Creating the sphere
-        sphere = rootNode.addChild("sphere")
-        sphere.addObject('MechanicalObject', name="mstate", template="Rigid3", translation2=[0., 0., 0.], rotation2=[0., 0., 0.], showObjectScale=50)
-        sphere.addObject('UniformMass', name="mass", vertexMass=[totalMass, volume, inertiaMatrix[:]])
-        sphere.addObject('UncoupledConstraintCorrection')
+    # Add new nodes and objects in the scene
+    node1 = root.addChild("Node1")
+    node2 = root.addChild("Node2")
 
-        sphere.addObject('EulerImplicitSolver', name='odesolver')
-        sphere.addObject('CGLinearSolver', name='Solver')
+    node1.addObject("MechanicalObject", template="Rigid3d", position="0 0 0   0 0 0 1", showObject="1")
 
-        collision = sphere.addChild('collision')
-        collision.addObject('MeshObjLoader', name="loader", filename="mesh/ball.obj", triangulate="true", scale=45.0)
+    node2.addObject("MechanicalObject", template="Rigid3d", position="1 1 1   0 0 0 1", showObject="1")
 
-        collision.addObject('MeshTopology', src="@loader")
-        collision.addObject('MechanicalObject')
+    return root
 
-        collision.addObject('TriangleCollisionModel')
-        collision.addObject('LineCollisionModel')
-        collision.addObject('PointCollisionModel')
 
-        collision.addObject('RigidMapping')
-
-        #### visualization
-        sphereVisu = sphere.addChild("VisualModel")
-        sphereVisu.loader = sphereVisu.addObject('MeshObjLoader', name="loader", filename="mesh/ball.obj")
-        sphereVisu.addObject('OglModel', name="model", src="@loader", scale3d=[50]*3, color=[0., 1., 0.], updateNormals=False)
-        sphereVisu.addObject('RigidMapping')
-
-        return rootNode
+# Function used only if this script is called from a python environment
+if __name__ == '__main__':
+    main()

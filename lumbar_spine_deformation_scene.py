@@ -1,9 +1,15 @@
 import Sofa
 import Sofa.Core
 import SofaRuntime
+import Sofa.Gui
+
+import json
 
 SofaRuntime.importPlugin('SofaComponentAll')
-import json
+SofaRuntime.importPlugin("Sofa.Component.StateContainer")
+SofaRuntime.importPlugin("SofaOpenglVisual")
+
+USE_GUI = False
 
 constant_force_fields_jane = {
     'vert1': '0.1 0.0 0.0',
@@ -129,7 +135,6 @@ def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
 
 def createScene(rootNode):
     nr_vertebrae = 5
-    
     spine_id = 'sub-verse500'
     path_json_file = '/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json'
 
@@ -180,7 +185,30 @@ def createScene(rootNode):
 
     return rootNode
 
-
-if __name__ == '__main__':
+def main():
     root = Sofa.Core.Node('root')
     createScene(root)
+    Sofa.Simulation.init(root)
+
+    if not USE_GUI:
+        for iteration in range(30):
+            Sofa.Simulation.animate(root, root.dt.value)
+            print(str(root.dt.value))
+    else:
+        # Find out the supported GUIs
+        print("Supported GUIs are: " + Sofa.Gui.GUIManager.ListSupportedGUI(","))
+        # Launch the GUI (qt or qglviewer)
+        Sofa.Gui.GUIManager.Init("myscene", "qglviewer")
+        Sofa.Gui.GUIManager.createGUI(root, __file__)
+        Sofa.Gui.GUIManager.SetDimension(1080, 1080)
+        # Initialization of the scene will be done here
+        Sofa.Gui.GUIManager.MainLoop(root)
+        Sofa.Gui.GUIManager.closeGUI()
+        print("GUI was closed")
+
+    print("Simulation is done.")
+
+if __name__ == '__main__':
+    main()
+
+
