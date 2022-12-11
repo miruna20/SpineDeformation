@@ -3,3 +3,5 @@ __pycache__
 lastUsedGUI.ini
 runSofa.ini 
 *.vtu
+*.txt
+*.json

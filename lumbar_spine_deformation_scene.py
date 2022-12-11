@@ -9,10 +9,10 @@ SofaRuntime.importPlugin('SofaComponentAll')
 SofaRuntime.importPlugin("Sofa.Component.StateContainer")
 SofaRuntime.importPlugin("SofaOpenglVisual")
 
-USE_GUI = False
+USE_GUI = True
 
 constant_force_fields_jane = {
-    'vert1': '0.1 0.0 0.0',
+    'v1': '0.1 0.0 0.0',
     'vert2': '0.1 0.1 0.0',
     'vert3': '0.2 0.1 0.0',
     'vert4': '0.1 0.1 0',
@@ -20,7 +20,7 @@ constant_force_fields_jane = {
 
 }
 constant_force_fields_scaled = {
-    'vert1': '0.0 100 0.0',
+    'v1': '0.0 100 0.0',
     'vert2': '100 100 0.0',
     'vert3': '100 200 0.0',
     'vert4': '100 100 0',
@@ -28,7 +28,7 @@ constant_force_fields_scaled = {
 
 }
 constant_force_fields_ours = {
-    'vert1': '0.0 10 0.0',
+    'v1': '0.0 10 0.0',
     'vert2': '10 10 0.0',
     'vert3': '10 20 0.0',
     'vert4': '10 10 0',
@@ -174,7 +174,7 @@ def createScene(rootNode):
     together.addObject('StiffSpringForceField',
                        name='points_fixed1',
                        object1='@fixed_points1/Particles1',
-                       object2='@vert1/mecha_node1/points1',
+                       object2='@v1/mecha_node1/points1',
                        spring=json_data['springs']['v0v1'])
 
     together.addObject('StiffSpringForceField',
