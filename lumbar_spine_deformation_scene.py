@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import glob
+import sys
 
 SofaRuntime.importPlugin('SofaComponentAll')
 SofaRuntime.importPlugin("Sofa.Component.StateContainer")
@@ -36,6 +37,7 @@ constant_force_fields_ours = {
     'vert5': '0 10 0',
 }
 
+
 def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     label = str(vert_id + 20)
     folder_name = os.path.join(root_path_vertebrae, str(spine_id) + "_verLev" + str(label))
@@ -45,7 +47,8 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     if (len(filenames) != 1):
         raise "There are multiple obj file for this vertebra: " + str(spine_id)
 
-    return filenames[0]
+    return filenames[0], folder_name
+
 
 def add_collision_function(rootNode):
     # Collision function
@@ -59,8 +62,10 @@ def add_collision_function(rootNode):
                        angleCone='0.0')
     rootNode.addObject('DiscreteIntersection')
 
-def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_vertebra):
+
+def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_vertebra, save_vtu_to):
     curr_vert_id = str(nr_vertebra + 1)
+    label = str(20 + nr_vertebra)
     curr_vert = parent_node_vertebrae.addChild('vert' + curr_vert_id)
 
     curr_vert.addObject('MechanicalObject', name='center_mass' + curr_vert_id, template='Rigid3d')
@@ -92,15 +97,17 @@ def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_ver
 
     mecha_node.addObject('RigidMapping', input='@..', output='@.')
 
-    mecha_node.addObject('VTKExporter', filename='spine' + str(spine_id) + '_vert' + curr_vert_id + '_20_',
+    mecha_node.addObject('VTKExporter',
+                         filename=os.path.join(save_vtu_to, str(spine_id) + '_verLev' + label + 'deformed_20_'),
                          listening='true', edges='0', triangles='1', quads='0', tetras='0',
                          pointsDataFields='points' + curr_vert_id + '.position', exportEveryNumberOfSteps='20')
+
 
 def add_springs_between_vertebrae(parent_node_vertebrae, nr_vertebra, springs_data):
     idx_first_vertebra = str(nr_vertebra)
     idx_second_vertebra = str(nr_vertebra + 1)
     curr_vertebrae_pair = 'v' + idx_first_vertebra + 'v' + idx_second_vertebra
-    #print('currvertpair' + str(curr_vertebrae_pair))
+    # print('currvertpair' + str(curr_vertebrae_pair))
 
     object1 = '@vert' + idx_first_vertebra + '/mecha_node' + idx_first_vertebra + '/points' + idx_first_vertebra
     object2 = '@vert' + idx_second_vertebra + '/mecha_node' + idx_second_vertebra + '/points' + idx_second_vertebra
@@ -129,6 +136,7 @@ def add_springs_between_vertebrae(parent_node_vertebrae, nr_vertebra, springs_da
                                     object2=object2,
                                     spring=springs_data['springs'][curr_vertebrae_pair]['facet_right'])
 
+
 def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points = parent_node_vertebra.addChild('fixed_points' + str(nr_vertebra))
     fixed_points.addObject('MechanicalObject',
@@ -143,6 +151,7 @@ def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
                            template='Vec3d',
                            name='fixedConstraint' + str(nr_vertebra),
                            indices=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
+
 
 def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
     nr_vertebrae = 5
@@ -160,9 +169,9 @@ def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
 
     # mech objects of vertebrae
     for i in range(nr_vertebrae):
-        filename = get_path_vertebrae_mesh(root_path_vertebrae, spine_id, i)
+        filename, dirname = get_path_vertebrae_mesh(root_path_vertebrae, spine_id, i)
         add_vertebra_node(parent_node_vertebrae=together, nr_vertebra=i, spine_id=spine_id,
-                          filename_vertebra=filename)
+                          filename_vertebra=filename, save_vtu_to=dirname)
 
     # read springs file
     file = open(path_json_file)
@@ -193,7 +202,8 @@ def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
 
     return rootNode
 
-def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui = True):
+
+def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True):
     print("Deforming" + str(spine_id))
     root = Sofa.Core.Node('root')
     createScene(root, spine_id, path_json_file, root_path_vertebrae)
@@ -220,8 +230,9 @@ def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui = Tr
 
     print("Simulation is done.")
 
+
 def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
-    if(txt_file==None or json_root_folder==None or vertebrae_root_folder==None):
+    if (txt_file == None or json_root_folder == None or vertebrae_root_folder == None):
         raise "Please provide all parameters: txt_file, json_root_folder and vertebrae_root_folder when calling the script for deformation of all spines "
         return
     # algo for processing multiple spines
@@ -232,21 +243,24 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
     # we can only deform all spines by setting use_gui to False
     # iterate over all, deform and save vtu files
     for spine_id in spine_ids:
-        #spine_id = spine_ids[0]
+        # spine_id = spine_ids[0]
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
         # perform simulation and save the results
-        deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
+        try:
+            deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
+        except Exception:
+            print("There was something wrong with deforming: " + str(spine_id), file=sys.stderr)
+
 
 if __name__ == '__main__':
-
     # example setup
     """
     spine_id = 'sub-verse500'
     path_json_file = '/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json'
     """
 
-    arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
+    arg_parser = argparse.ArgumentParser(description="Create scene for lumbar spine deformation")
 
     arg_parser.add_argument(
         "--root_path_vertebrae",
@@ -271,6 +285,9 @@ if __name__ == '__main__':
 
     args = arg_parser.parse_args()
 
+    # TODO redeform everything from the next one after 593
+    # TODO maybe have some type of skip system
+
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
     deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
 
@@ -282,7 +299,3 @@ if __name__ == '__main__':
         root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
         use_gui=True)
     """
-
-
-
-
