@@ -303,7 +303,7 @@ def generate_springs_for_one_spine(root_path_spine, spine_id, json_file):
     for idx_vert in range(1, len(vertebrae_meshes)):
         curr_pair_of_vertebra = "v" + str(idx_vert) + "v" + str(idx_vert + 1)  # e.g v1v2 or v2v3
 
-        print("Working on springs between vertebra: " + "L" + str(idx_vert) + "and " + str("L" + str(idx_vert + 1)))
+        print("Working on springs between vertebra: " + "L" + str(idx_vert) + " and " + str("L" + str(idx_vert + 1)))
 
         v1 = vertebrae_meshes[idx_vert - 1]
         v2 = vertebrae_meshes[idx_vert]
@@ -314,7 +314,7 @@ def generate_springs_for_one_spine(root_path_spine, spine_id, json_file):
         dict_curr_pair_strings["body"] = process_vertebrae_bodies(v1, v2, s_body, d_body, visualization=args.visualize)
 
         #print("Generating springs between facet joints on the left")
-        dict_curr_pair_strings["facet_left"], dict_curr_pair_strings["face_right"] = process_facets(
+        dict_curr_pair_strings["facet_left"], dict_curr_pair_strings["facet_right"] = process_facets(
             v1, v2, s_facet, d_facet, visualization=args.visualize)
 
         dict_pairs[curr_pair_of_vertebra] = dict_curr_pair_strings

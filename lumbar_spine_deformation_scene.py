@@ -3,13 +3,14 @@ import Sofa.Core
 import SofaRuntime
 import Sofa.Gui
 
+import argparse
 import json
+import os
+import glob
 
 SofaRuntime.importPlugin('SofaComponentAll')
 SofaRuntime.importPlugin("Sofa.Component.StateContainer")
 SofaRuntime.importPlugin("SofaOpenglVisual")
-
-USE_GUI = True
 
 constant_force_fields_jane = {
     'vert1': '0.1 0.0 0.0',
@@ -35,6 +36,17 @@ constant_force_fields_ours = {
     'vert5': '0 10 0',
 }
 
+def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
+    label = str(vert_id + 20)
+    folder_name = os.path.join(root_path_vertebrae, str(spine_id) + "_verLev" + str(label))
+
+    # in the folder look for obj file
+    filenames = glob.glob(os.path.join(folder_name, '*.obj'))
+    if (len(filenames) != 1):
+        raise "There are multiple obj file for this vertebra: " + str(spine_id)
+
+    return filenames[0]
+
 def add_collision_function(rootNode):
     # Collision function
     rootNode.addObject('DefaultPipeline', verbose='0', name='CollisionPipeline')
@@ -47,7 +59,7 @@ def add_collision_function(rootNode):
                        angleCone='0.0')
     rootNode.addObject('DiscreteIntersection')
 
-def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id):
+def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_vertebra):
     curr_vert_id = str(nr_vertebra + 1)
     curr_vert = parent_node_vertebrae.addChild('vert' + curr_vert_id)
 
@@ -57,11 +69,10 @@ def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id):
 
     # mechanical model node as child from the current vertebra node
     mecha_node = curr_vert.addChild('mecha_node' + curr_vert_id)
-    filename = 'mesh/spine' + str(spine_id) + 'v' + curr_vert_id + '.obj'
 
     mecha_node.addObject('MeshObjLoader',
                          name='ObjLoader' + curr_vert_id,
-                         filename=filename,
+                         filename=filename_vertebra,
                          printLog='true',
                          flipNormals='0')
 
@@ -89,60 +100,57 @@ def add_springs_between_vertebrae(parent_node_vertebrae, nr_vertebra, springs_da
     idx_first_vertebra = str(nr_vertebra)
     idx_second_vertebra = str(nr_vertebra + 1)
     curr_vertebrae_pair = 'v' + idx_first_vertebra + 'v' + idx_second_vertebra
-    print('currvertpair' + str(curr_vertebrae_pair))
+    #print('currvertpair' + str(curr_vertebrae_pair))
 
     object1 = '@vert' + idx_first_vertebra + '/mecha_node' + idx_first_vertebra + '/points' + idx_first_vertebra
     object2 = '@vert' + idx_second_vertebra + '/mecha_node' + idx_second_vertebra + '/points' + idx_second_vertebra
 
     # add springs between vertebrae bodies
     parent_node_vertebrae.addObject('StiffSpringForceField',
-                       template='Vec3d',
-                       name='box_springs' + idx_first_vertebra,
-                       object1=object1,
-                       object2=object2,
-                       spring=springs_data['springs'][curr_vertebrae_pair]['body'])
+                                    template='Vec3d',
+                                    name='box_springs' + idx_first_vertebra,
+                                    object1=object1,
+                                    object2=object2,
+                                    spring=springs_data['springs'][curr_vertebrae_pair]['body'])
 
     # add springs between facet left
     parent_node_vertebrae.addObject('StiffSpringForceField',
-                       template='Vec3d',
-                       name='facet_left_springs' + idx_first_vertebra,
-                       object1=object1,
-                       object2=object2,
-                       spring=springs_data['springs'][curr_vertebrae_pair]['facet_left'])
+                                    template='Vec3d',
+                                    name='facet_left_springs' + idx_first_vertebra,
+                                    object1=object1,
+                                    object2=object2,
+                                    spring=springs_data['springs'][curr_vertebrae_pair]['facet_left'])
 
     # add springs between facet right
     parent_node_vertebrae.addObject('StiffSpringForceField',
-                       template='Vec3d',
-                       name='facet_right_springs' + idx_first_vertebra,
-                       object1=object1,
-                       object2=object2,
-                       spring=springs_data['springs'][curr_vertebrae_pair]['facet_right'])
+                                    template='Vec3d',
+                                    name='facet_right_springs' + idx_first_vertebra,
+                                    object1=object1,
+                                    object2=object2,
+                                    spring=springs_data['springs'][curr_vertebrae_pair]['facet_right'])
 
 def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points = parent_node_vertebra.addChild('fixed_points' + str(nr_vertebra))
     fixed_points.addObject('MechanicalObject',
-                              name='Particles' + str(nr_vertebra),
-                              template='Vec3d',
-                              position=springs_data['fixed_points_positions']['v' + str(nr_vertebra)])
+                           name='Particles' + str(nr_vertebra),
+                           template='Vec3d',
+                           position=springs_data['fixed_points_positions']['v' + str(nr_vertebra)])
     fixed_points.addObject('MeshTopology',
-                              name='Topology',
-                              hexas=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
+                           name='Topology',
+                           hexas=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
     fixed_points.addObject('UniformMass', name='Mass', vertexMass='1')
     fixed_points.addObject('FixedConstraint',
-                              template='Vec3d',
-                              name='fixedConstraint' + str(nr_vertebra),
-                              indices=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
+                           template='Vec3d',
+                           name='fixedConstraint' + str(nr_vertebra),
+                           indices=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
 
-def createScene(rootNode):
+def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
     nr_vertebrae = 5
-    spine_id = 'sub-verse500'
-    path_json_file = '/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json'
 
     # Visualization style
     rootNode.addObject('VisualStyle', displayFlags='showVisual showBehaviorModels showInteractionForceFields')
 
     add_collision_function(rootNode)
-
 
     # Parent node of all vertebrae
     together = rootNode.addChild('Together')
@@ -152,7 +160,9 @@ def createScene(rootNode):
 
     # mech objects of vertebrae
     for i in range(nr_vertebrae):
-        add_vertebra_node(parent_node_vertebrae=together,nr_vertebra=i,spine_id=spine_id)
+        filename = get_path_vertebrae_mesh(root_path_vertebrae, spine_id, i)
+        add_vertebra_node(parent_node_vertebrae=together, nr_vertebra=i, spine_id=spine_id,
+                          filename_vertebra=filename)
 
     # read springs file
     file = open(path_json_file)
@@ -160,15 +170,13 @@ def createScene(rootNode):
 
     # add springs in between vertebrae
     for i in range(1, nr_vertebrae):
-        add_springs_between_vertebrae(parent_node_vertebrae=together, nr_vertebra=i,springs_data=json_data)
-
+        add_springs_between_vertebrae(parent_node_vertebrae=together, nr_vertebra=i, springs_data=json_data)
 
     # add positions of fixed points for v1
     add_fixed_points(parent_node_vertebra=together, nr_vertebra=1, springs_data=json_data)
 
     # add positions of fixed points for v5
     add_fixed_points(parent_node_vertebra=together, nr_vertebra=5, springs_data=json_data)
-
 
     # add springs between points in v1 and fixed points in v1 and the same for v5
     together.addObject('StiffSpringForceField',
@@ -185,22 +193,26 @@ def createScene(rootNode):
 
     return rootNode
 
-def main():
+def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui = True):
+    print("Deforming" + str(spine_id))
     root = Sofa.Core.Node('root')
-    createScene(root)
+    createScene(root, spine_id, path_json_file, root_path_vertebrae)
     Sofa.Simulation.init(root)
 
-    if not USE_GUI:
-        for iteration in range(30):
+    if not use_gui:
+        for iteration in range(21):
+            print("Iteration:" + str(iteration))
             Sofa.Simulation.animate(root, root.dt.value)
             print(str(root.dt.value))
     else:
         # Find out the supported GUIs
         print("Supported GUIs are: " + Sofa.Gui.GUIManager.ListSupportedGUI(","))
-        # Launch the GUI (qt or qglviewer)
+        # iterate over all spines in the txt file
         Sofa.Gui.GUIManager.Init("myscene", "qglviewer")
+        # Launch the GUI (qt or qglviewer)
         Sofa.Gui.GUIManager.createGUI(root, __file__)
         Sofa.Gui.GUIManager.SetDimension(1080, 1080)
+
         # Initialization of the scene will be done here
         Sofa.Gui.GUIManager.MainLoop(root)
         Sofa.Gui.GUIManager.closeGUI()
@@ -208,7 +220,69 @@ def main():
 
     print("Simulation is done.")
 
+def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
+    if(txt_file==None or json_root_folder==None or vertebrae_root_folder==None):
+        raise "Please provide all parameters: txt_file, json_root_folder and vertebrae_root_folder when calling the script for deformation of all spines "
+        return
+    # algo for processing multiple spines
+    # open txt file with list of files
+    with open(txt_file) as file:
+        spine_ids = [line.strip() for line in file]
+
+    # we can only deform all spines by setting use_gui to False
+    # iterate over all, deform and save vtu files
+    for spine_id in spine_ids:
+        #spine_id = spine_ids[0]
+        json_path = os.path.join(json_root_folder, spine_id + ".json")
+
+        # perform simulation and save the results
+        deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
+
 if __name__ == '__main__':
-    main()
+
+    # example setup
+    """
+    spine_id = 'sub-verse500'
+    path_json_file = '/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json'
+    """
+
+    arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
+
+    arg_parser.add_argument(
+        "--root_path_vertebrae",
+        required=False,
+        dest="root_path_vertebrae",
+        help="Root path to the vertebrae folders."
+    )
+
+    arg_parser.add_argument(
+        "--list_file_names",
+        required=False,
+        dest="txt_file",
+        help="Txt file that contains all spines that contain all lumbar vertebrae"
+    )
+
+    arg_parser.add_argument(
+        "--root_folder_json_files",
+        required=False,
+        dest="root_json_files",
+        help="Root folder where the json files will be saved."
+    )
+
+    args = arg_parser.parse_args()
+
+    # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
+    deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
+
+    # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
+    """
+    deform_one_spine(
+        spine_id='sub-verse500',
+        path_json_file="/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json",
+        root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
+        use_gui=True)
+    """
+
+
 
 
