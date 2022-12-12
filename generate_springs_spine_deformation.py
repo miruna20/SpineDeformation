@@ -1,11 +1,11 @@
 import numpy as np
 import open3d as o3d
-import trimesh
 import math
 import os
 import pathlib
 import argparse
 import json
+import sys
 
 s_body = 5000
 d_body = 3
@@ -217,7 +217,7 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
         lines.append([k, k + 1])
         k += 2
 
-    print("nr_springs: " + str(k / 2))
+    #print("nr_springs: " + str(k / 2))
 
     if (visualization):
         # create lines in between vertebrae bodies
@@ -291,6 +291,58 @@ def get_indices_of_vertebrae_bodies(vert1, vert2, bb_v1_v2, bb_v2_v1):
 
     return indices_in_bb_on_surface_v1_v2, indices_in_bb_on_surface_v2_v1
 
+def generate_springs_for_one_spine(root_path_spine, spine_id, json_file):
+    # list of vertebrae meshes
+    vertebrae_meshes = get_vertebrae_meshes_from_filenames(root_folder=root_path_spine,
+                                                           spine_name=spine_id)
+    # iterate over all pairs
+
+    json_data = {}
+    dict_pairs = {}
+
+    for idx_vert in range(1, len(vertebrae_meshes)):
+        curr_pair_of_vertebra = "v" + str(idx_vert) + "v" + str(idx_vert + 1)  # e.g v1v2 or v2v3
+
+        print("Working on springs between vertebra: " + "L" + str(idx_vert) + "and " + str("L" + str(idx_vert + 1)))
+
+        v1 = vertebrae_meshes[idx_vert - 1]
+        v2 = vertebrae_meshes[idx_vert]
+
+        dict_curr_pair_strings = {}
+
+        #print("Generating springs between vertebrae bodies")
+        dict_curr_pair_strings["body"] = process_vertebrae_bodies(v1, v2, s_body, d_body, visualization=args.visualize)
+
+        #print("Generating springs between facet joints on the left")
+        dict_curr_pair_strings["facet_left"], dict_curr_pair_strings["face_right"] = process_facets(
+            v1, v2, s_facet, d_facet, visualization=args.visualize)
+
+        dict_pairs[curr_pair_of_vertebra] = dict_curr_pair_strings
+
+    # get fixed points
+    L1_indices_fixed_points, L1_positions_fixed_points, L1_springs_fixed_positions = process_fixed_points(
+        vertebrae_meshes[0], "prev", visualization=args.visualize)
+    L5_indices_fixed_points, L5_positions_fixed_points, L5_springs_fixed_positions = process_fixed_points(
+        vertebrae_meshes[4], "after", visualization=args.visualize)
+
+    dict_pairs["v0v1"] = L1_springs_fixed_positions
+    dict_pairs["v5v6"] = L5_springs_fixed_positions
+
+    json_data["springs"] = dict_pairs
+
+    json_data["fixed_points_positions"] = {
+        "v1": L1_positions_fixed_points,
+        "v5": L5_positions_fixed_points
+    }
+    json_data["fixed_points_indices"] = {
+        "v1": L1_indices_fixed_points,
+        "v5": L5_indices_fixed_points
+    }
+
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, indent=4)
+
+
 if __name__ == "__main__":
 
     """
@@ -310,18 +362,19 @@ if __name__ == "__main__":
     )
 
     arg_parser.add_argument(
-        "--spine",
-        required=True,
-        dest="spine_id",
-        help="Id of the spine to be processed. Levels L1, L2, L3, L4 (i.e 20,21,22,23,24) are taken into account"
+        "--root_folder_json_files",
+        required=False,
+        dest="root_json_files",
+        help="Root folder where the json files will be saved."
     )
 
     arg_parser.add_argument(
-        "--path_json_file_with_springs",
+        "--list_file_names",
         required=True,
-        dest="json_file",
-        help="Json file where all of the info about springs are saved. One spring is represented by (idx_vert1, indx_vert2, s,d, dist(v1[idx_vert1]-vert2[idx_vert2])"
+        dest="txt_file",
+        help="Txt file that contains all spines that contain all lumbar vertebrae"
     )
+
     arg_parser.add_argument(
         "--visualize",
         action="store_true",
@@ -332,52 +385,13 @@ if __name__ == "__main__":
     # iterate over these spine ids and get the corresponding L1-L5 vertebrae
     args = arg_parser.parse_args()
 
-    # list of vertebrae meshes
-    vertebrae_meshes = get_vertebrae_meshes_from_filenames(root_folder=args.root_path_vertebrae, spine_name=args.spine_id)
-    # iterate over all pairs
+    # iterate over the txt file and process all spines
+    with open(args.txt_file) as file:
+        spine_ids = [line.strip() for line in file]
 
-    json_data = {}
-    dict_pairs = {}
-    dict_fixed_points_positions = {}
-    dict_indices = {}
-
-    for idx_vert in range(1, len(vertebrae_meshes)):
-        curr_pair_of_vertebra = "v" + str(idx_vert) + "v" + str(idx_vert + 1)  # e.g v1v2 or v2v3
-
-        print("Working on springs between vertebra: " + "L" + str(idx_vert) + "and " + str("L" + str(idx_vert+1)))
-
-        v1 = vertebrae_meshes[idx_vert - 1]
-        v2 = vertebrae_meshes[idx_vert]
-
-        dict_curr_pair_strings = {}
-
-        print("Generating springs between vertebrae bodies")
-        dict_curr_pair_strings["body"] = process_vertebrae_bodies(v1, v2, s_body, d_body,visualization=args.visualize)
-
-        print("Generating springs between facet joints on the left")
-        dict_curr_pair_strings["facet_left"], dict_curr_pair_strings["face_right"] = process_facets(
-            v1, v2, s_facet, d_facet,visualization=args.visualize)
-
-        dict_pairs[curr_pair_of_vertebra] = dict_curr_pair_strings
-
-
-    # get fixed points
-    L1_indices_fixed_points, L1_positions_fixed_points, L1_springs_fixed_positions = process_fixed_points(vertebrae_meshes[0],"prev",visualization=args.visualize)
-    L5_indices_fixed_points, L5_positions_fixed_points, L5_springs_fixed_positions = process_fixed_points(vertebrae_meshes[4], "after",visualization=args.visualize)
-
-    dict_pairs["v0v1"] = L1_springs_fixed_positions
-    dict_pairs["v5v6"] = L5_springs_fixed_positions
-
-    json_data["springs"] = dict_pairs
-
-    json_data["fixed_points_positions"] = {
-        "v1": L1_positions_fixed_points,
-        "v5": L5_positions_fixed_points
-    }
-    json_data["fixed_points_indices"] = {
-        "v1": L1_indices_fixed_points,
-        "v5": L5_indices_fixed_points
-    }
-
-    with open(args.json_file, 'w', encoding='utf-8') as f:
-        json.dump(json_data, f, indent=4)
+    for spine_id in spine_ids:
+        print("Processing " + str(spine_id))
+        try:
+            generate_springs_for_one_spine(root_path_spine=args.root_path_vertebrae,spine_id=spine_id,json_file=os.path.join(args.root_json_files,str(spine_id) + ".json"))
+        except Exception:
+            print("Error occured for:  " + str(spine_id), file=sys.stderr)
