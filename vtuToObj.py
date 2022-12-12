@@ -14,7 +14,8 @@ def vtuToObj(file_path):
     mesh_vtu = meshio.read(file_path)
 
     mesh = meshio.Mesh(
-        mesh_vtu.points * 1e3,
+       # mesh_vtu.points * 1e3,
+        mesh_vtu.points,
         mesh_vtu.cells,
         # Optionally provide extra data on points, cells, etc.
         mesh_vtu.point_data,

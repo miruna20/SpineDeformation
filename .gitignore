@@ -5,3 +5,4 @@ runSofa.ini
 *.vtu
 *.txt
 *.json
+*.nii.gz
