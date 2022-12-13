@@ -23,9 +23,10 @@ def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
         path = os.path.join(root_folder, spine_name + "_verLev" + str(20 + i))
         pathVertebra = \
             list(
-                pathlib.Path(path).glob('*.obj'))[
-                0]
-        mesh = o3d.io.read_triangle_mesh(str(pathVertebra))
+                pathlib.Path(path).glob('*msh.obj'))
+        if (len(pathVertebra) != 1):
+            raise "There are multiple obj file for this vertebra: " + str(spine_id)
+        mesh = o3d.io.read_triangle_mesh(str(pathVertebra[0]))
         vertebrae_meshes.append(mesh)
     return vertebrae_meshes
 
@@ -188,6 +189,12 @@ def get_indices_points_with_selected_normals_within_bb(vert, normal_vector, bb_i
     indices = [i for i in range(normals.shape[0]) if (np.array_equal(normals[i], normal_vector) and i in bb_indices)]
     return indices
 
+def get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert,bb_indices):
+    vertices = np.asarray(vert.vertices)
+    y_coord_center_of_mass = vert.get_center()[1]-5
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] < y_coord_center_of_mass and i in bb_indices]
+    return indices
+
 def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
                                          visualization=False):
     np.random.shuffle(indices_vert1)
@@ -281,13 +288,17 @@ def get_indices_of_vertebrae_bodies(vert1, vert2, bb_v1_v2, bb_v2_v1):
     indices_in_bb_v2_v1 = o3d.geometry.OrientedBoundingBox.get_point_indices_within_bounding_box(bb_v2_v1,
                                                                                                  vert2.vertices)
 
+    # filter the ones with higher y than the center of mass
+    indices_in_bb_v1_v2_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert1,indices_in_bb_v1_v2)
+    indices_in_bb_v2_v1_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert2,indices_in_bb_v2_v1)
+
     # select only points that have the normals parallel to the z axis from positive to negative
     indices_in_bb_on_surface_v1_v2 = get_indices_points_with_selected_normals_within_bb(vert1, [0, 0, -1],
-                                                                                        indices_in_bb_v1_v2)
+                                                                                        indices_in_bb_v1_v2_vert_body)
 
     # select only points that have the normals parallel to the z axis from negative to positive
     indices_in_bb_on_surface_v2_v1 = get_indices_points_with_selected_normals_within_bb(vert2, [0, 0, 1],
-                                                                                        indices_in_bb_v2_v1)
+                                                                                        indices_in_bb_v2_v1_vert_body)
 
     return indices_in_bb_on_surface_v1_v2, indices_in_bb_on_surface_v2_v1
 

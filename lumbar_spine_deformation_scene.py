@@ -43,7 +43,7 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     folder_name = os.path.join(root_path_vertebrae, str(spine_id) + "_verLev" + str(label))
 
     # in the folder look for obj file
-    filenames = glob.glob(os.path.join(folder_name, '*.obj'))
+    filenames = glob.glob(os.path.join(folder_name, '*msh.obj'))
     if (len(filenames) != 1):
         raise "There are multiple obj file for this vertebra: " + str(spine_id)
 
@@ -136,7 +136,6 @@ def add_springs_between_vertebrae(parent_node_vertebrae, nr_vertebra, springs_da
                                     object2=object2,
                                     spring=springs_data['springs'][curr_vertebrae_pair]['facet_right'])
 
-
 def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points = parent_node_vertebra.addChild('fixed_points' + str(nr_vertebra))
     fixed_points.addObject('MechanicalObject',
@@ -204,7 +203,7 @@ def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
 
 
 def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True):
-    print("Deforming" + str(spine_id))
+    print("Deforming " + str(spine_id))
     root = Sofa.Core.Node('root')
     createScene(root, spine_id, path_json_file, root_path_vertebrae)
     Sofa.Simulation.init(root)
@@ -285,17 +284,16 @@ if __name__ == '__main__':
 
     args = arg_parser.parse_args()
 
-    # TODO redeform everything from the next one after 593
     # TODO maybe have some type of skip system
 
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
-    deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
+    #deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
 
     # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
-    """
+    spine_id = 'sub-verse605'
     deform_one_spine(
-        spine_id='sub-verse500',
-        path_json_file="/home/miruna20/Documents/Thesis/Code/Preprocessing/master_thesis/samples/subverse500.json",
+        spine_id=spine_id,
+        path_json_file= os.path.join("/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json" ),
         root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
         use_gui=True)
-    """
+
