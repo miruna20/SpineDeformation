@@ -47,6 +47,13 @@ def process_facets(vert1, vert2, s, d, visualization=False):
     indices_facet_v1_left, indices_facet_v2_left, indices_facet_v1_right, indices_facet_v2_right = get_indices_of_facets_of_2_vertebrae(
         vert1, vert2)
 
+    # due to some missegmentations (see L4-L5 in sub-verse519) the 2 vertebrae meshes are also very close at the base, not only between facets which generates wrong springs
+    # to fix this issue, we only consider points with y coordinate larger than the y coord of the center of mass point
+    indices_facet_v1_left = get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert1,indices_facet_v1_left)
+    indices_facet_v1_right = get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert1,indices_facet_v1_right)
+    indices_facet_v2_left = get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert2,indices_facet_v2_left)
+    indices_facet_v2_right = get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert2,indices_facet_v2_right)
+
     specs_facet_left = print_spring_specs_between_vertebrae(vert1, vert2, indices_facet_v1_left, indices_facet_v2_left,
                                                             s, d, body=False,visualization=visualization)
     specs_facet_right = print_spring_specs_between_vertebrae(vert1, vert2, indices_facet_v1_right,
@@ -161,12 +168,12 @@ def get_indices_of_facets_of_2_vertebrae(vert1_mesh, vert2_mesh, visualization=T
 
     for idx_vert1 in range(0, nr_points_vert1):
         # find all points within a radius
-        [k, idx_neighbors, dist] = pcd_tree.search_radius_vector_3d(vert1_vert2_pc.points[idx_vert1], 2)
+        [k, idx_neighbors, dist] = pcd_tree.search_radius_vector_3d(vert1_vert2_pc.points[idx_vert1], 1)
 
         # find first index and therefore closest that is larger or equal to nr_points_vert
         index_closest_point_from_pc2 = next(filter(lambda index: index >= nr_points_vert1, idx_neighbors), None)
 
-        # if None then no point from the other pointcloud is close so we exclude them
+        # if None then no point from the other point-cloud is close, so we exclude them
         if (index_closest_point_from_pc2 != None):
 
             if (np.asarray(vert1_mesh.vertices)[idx_vert1][0] < center_vert1[0]):
@@ -193,6 +200,12 @@ def get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert,bb_indic
     vertices = np.asarray(vert.vertices)
     y_coord_center_of_mass = vert.get_center()[1]-5
     indices = [i for i in range(vertices.shape[0]) if vertices[i][1] < y_coord_center_of_mass and i in bb_indices]
+    return indices
+
+def get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert,bb_indices):
+    vertices = np.asarray(vert.vertices)
+    y_coord_center_of_mass = vert.get_center()[1]+5
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] >= y_coord_center_of_mass and i in bb_indices]
     return indices
 
 def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
