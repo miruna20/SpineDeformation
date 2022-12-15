@@ -5,14 +5,7 @@ import Sofa
 # Choose in your script to activate or not the GUI
 USE_GUI = False
 
-
-def main():
-    import SofaRuntime
-    import Sofa.Gui
-    # Make sure to load all SOFA libraries
-    SofaRuntime.importPlugin("Sofa.Component.StateContainer")
-    SofaRuntime.importPlugin("SofaOpenglVisual")
-
+def apply_once():
     #Create the root node
     root = Sofa.Core.Node("root")
     # Call the below 'createScene' function to create the scene graph
@@ -35,6 +28,14 @@ def main():
         print("GUI was closed")
 
     print("Simulation is done.")
+def main():
+    import SofaRuntime
+    import Sofa.Gui
+    # Make sure to load all SOFA libraries
+    SofaRuntime.importPlugin("Sofa.Component.StateContainer")
+    SofaRuntime.importPlugin("SofaOpenglVisual")
+    for i in range(2):
+        apply_once()
 
 
 # Function called when the scene graph is being created

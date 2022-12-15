@@ -12,7 +12,7 @@ def get_spines_with_lumbar_vertebrae(root_folder, file):
     :param file: path of txt file to be saved
     :return:
     """
-
+    print("Creating text file with all spines that contain lumbar vertebrae")
     # gather all of the json files to be able to check for lumbar vertebrae
     filenames = []
     for path in Path(os.path.join(root_folder)).rglob('*.json'):
@@ -27,7 +27,7 @@ def get_spines_with_lumbar_vertebrae(root_folder, file):
         f = open(json_file)
         data = json.load(f)
         for i in range(1,len(data)):
-            if 20<= data[i]["label"] <= 24:
+            if 20 <= data[i]["label"] <= 24:
                 contained_lumbar_vert.append(data[i]["label"])
 
         # if all lumbar vertebrae are contained
@@ -45,17 +45,18 @@ if __name__ == "__main__":
     file = "../samples/lumbar_spines.txt"
     
     """
+    print("Hello from getting lumbar vertebrae")
     arg_parser = argparse.ArgumentParser(description="Generate txt file with the names of the spines that contain all lumbar vertebrae")
 
     arg_parser.add_argument(
-        "--root_folder",
+        "--root_path_spines",
         required=True,
-        dest="root_folder",
+        dest="root_path_spines",
         help="Root path to the vertebrae folders."
     )
 
     arg_parser.add_argument(
-        "--txt_file_lumbar_spines",
+        "--list_file_names",
         required=True,
         dest="txt_file",
         help="File where the names of the lumbar vertebrae will be written"
@@ -63,7 +64,7 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
-    get_spines_with_lumbar_vertebrae(root_folder=args.root_folder, file=args.txt_file)
+    get_spines_with_lumbar_vertebrae(root_folder=args.root_path_spines, file=args.txt_file)
 
 
 

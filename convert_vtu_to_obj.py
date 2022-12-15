@@ -64,6 +64,7 @@ if __name__ == "__main__":
     )
     args = arg_parser.parse_args()
 
+    print("Converting all vtu files resulted from spine deformation to obj")
     vtuToObj_all_files(args.txt_file,args.root_path_vertebrae)
     # sanity check
     #vtuToObj("/home/miruna20/Documents/Thesis/SpineDeformation/code/sofa/build/results/spinesub-verse500_vert3_20_0.vtu")

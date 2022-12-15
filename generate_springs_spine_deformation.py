@@ -198,7 +198,7 @@ def get_indices_points_with_selected_normals_within_bb(vert, normal_vector, bb_i
 
 def get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert,bb_indices):
     vertices = np.asarray(vert.vertices)
-    y_coord_center_of_mass = vert.get_center()[1]-5
+    y_coord_center_of_mass = vert.get_center()[1]
     indices = [i for i in range(vertices.shape[0]) if vertices[i][1] < y_coord_center_of_mass and i in bb_indices]
     return indices
 
@@ -206,6 +206,18 @@ def get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert,bb_indi
     vertices = np.asarray(vert.vertices)
     y_coord_center_of_mass = vert.get_center()[1]+5
     indices = [i for i in range(vertices.shape[0]) if vertices[i][1] >= y_coord_center_of_mass and i in bb_indices]
+    return indices
+
+def get_indices_points_with_z_coord_bigger_than_center_of_mass(vert, bb_indices):
+    vertices = np.asarray(vert.vertices)
+    z_coord_center_of_mass = vert.get_center()[2]
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] > z_coord_center_of_mass-10 and i in bb_indices]
+    return indices
+
+def get_indices_points_with_z_coord_smaller_than_center_of_mass(vert, bb_indices):
+    vertices = np.asarray(vert.vertices)
+    z_coord_center_of_mass = vert.get_center()[2]
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] <= z_coord_center_of_mass+10 and i in bb_indices]
     return indices
 
 def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
@@ -405,7 +417,7 @@ if __name__ == "__main__":
         dest="visualize",
         help="Activate flag for visualization"
     )
-
+    print("Generating springs for spine deformation")
     # iterate over these spine ids and get the corresponding L1-L5 vertebrae
     args = arg_parser.parse_args()
 

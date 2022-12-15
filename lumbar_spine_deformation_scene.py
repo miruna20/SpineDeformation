@@ -30,11 +30,11 @@ constant_force_fields_scaled = {
 
 }
 constant_force_fields_ours = {
-    'vert1': '0.0 10 0.0',
-    'vert2': '10 10 0.0',
-    'vert3': '10 20 0.0',
-    'vert4': '10 10 0',
-    'vert5': '0 10 0',
+    'vert1': '0.0 -15 0.0',
+    'vert2': '10 -20 0.0',
+    'vert3': '10 -50 0.0',
+    'vert4': '10 -20 0',
+    'vert5': '0 -10 0',
 }
 
 
@@ -209,10 +209,10 @@ def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True
     Sofa.Simulation.init(root)
 
     if not use_gui:
-        for iteration in range(21):
+        for iteration in range(2):
             print("Iteration:" + str(iteration))
             Sofa.Simulation.animate(root, root.dt.value)
-            print(str(root.dt.value))
+            #print(str(root.dt.value))
     else:
         # Find out the supported GUIs
         print("Supported GUIs are: " + Sofa.Gui.GUIManager.ListSupportedGUI(","))
@@ -226,6 +226,7 @@ def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True
         Sofa.Gui.GUIManager.MainLoop(root)
         Sofa.Gui.GUIManager.closeGUI()
         print("GUI was closed")
+    #Sofa.Simulation.Deinit(root)
 
     print("Simulation is done.")
 
@@ -246,10 +247,10 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
         # perform simulation and save the results
-        try:
-            deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
-        except Exception:
-            print("There was something wrong with deforming: " + str(spine_id), file=sys.stderr)
+        #try:
+        deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
+        #except Exception:
+        #print("There was something wrong with deforming: " + str(spine_id), file=sys.stderr)
 
 
 if __name__ == '__main__':
@@ -282,18 +283,30 @@ if __name__ == '__main__':
         help="Root folder where the json files will be saved."
     )
 
+    arg_parser.add_argument(
+        "--deform_all",
+        action="store_true",
+        dest="deform_all",
+        help="Activate flag to deform all spines without GUI and save the vtu results"
+    )
+
     args = arg_parser.parse_args()
-
+    print("Deforming spines with sofa framework")
     # TODO maybe have some type of skip system
-
+    # TODO check what s wrong with 605
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
-    #deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
+    if(args.deform_all):
+        deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
+    else:
+        # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
+        #spine_id = 'sub-verse835'
+        #spine_id = 'sub-verse519'
+        spine_id = 'sub-verse807'
+        deform_one_spine(
+            spine_id=spine_id,
+            path_json_file= os.path.join("/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json" ),
+            root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
+            use_gui=True)
+    
 
-    # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
-    spine_id = 'sub-verse605'
-    deform_one_spine(
-        spine_id=spine_id,
-        path_json_file= os.path.join("/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json" ),
-        root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
-        use_gui=True)
 

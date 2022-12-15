@@ -27,7 +27,7 @@ if __name__ == "__main__":
         help="Root path to the vertebrae folders."
     )
     args = arg_parser.parse_args()
-
+    print("Converting deformed spines from obj format to labelmaps")
     # iterate over the txt file
     with open(args.txt_file) as file:
         spine_ids = [line.strip() for line in file]
