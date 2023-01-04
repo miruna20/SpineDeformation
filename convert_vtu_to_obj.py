@@ -35,8 +35,8 @@ def vtuToObj_all_files(txt_file, root_path_vertebrae):
         print("Processing: " + str(spine_id))
         look_for = "**/*" + str(spine_id) +  '*.vtu'
         filenames = glob.glob(os.path.join(root_path_vertebrae, look_for),recursive=True)
-        if(len(filenames)!=5):
-            print("There are less than 5 vtu files for this spine so we skip: " + str(spine_id), file=sys.stderr)
+        if(len(filenames)%5!=0):
+            print("The number of vtu files to be found needs to be a multiple of 5: " + str(spine_id), file=sys.stderr)
             continue
 
         for vtu_file in filenames:

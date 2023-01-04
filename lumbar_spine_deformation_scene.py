@@ -8,10 +8,13 @@ import json
 import os
 import glob
 import sys
+import random
 
-SofaRuntime.importPlugin('SofaComponentAll')
 SofaRuntime.importPlugin("Sofa.Component.StateContainer")
 SofaRuntime.importPlugin("SofaOpenglVisual")
+SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Algorithm")
+SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Intersection")
+SofaRuntime.importPlugin('SofaComponentAll')
 
 constant_force_fields_jane = {
     'vert1': '0.1 0.0 0.0',
@@ -22,11 +25,11 @@ constant_force_fields_jane = {
 
 }
 constant_force_fields_scaled = {
-    'vert1': '0.0 100 0.0',
-    'vert2': '100 100 0.0',
-    'vert3': '100 200 0.0',
-    'vert4': '100 100 0',
-    'vert5': '0 100 0',
+    'vert1': '0.0 -50 0.0',
+    'vert2': '50 -100 0.0',
+    'vert3': '50 -200 0.0',
+    'vert4': '50 -100 0',
+    'vert5': '0 -50 0',
 
 }
 constant_force_fields_ours = {
@@ -34,7 +37,7 @@ constant_force_fields_ours = {
     'vert2': '10 -20 0.0',
     'vert3': '10 -50 0.0',
     'vert4': '10 -20 0',
-    'vert5': '0 -10 0',
+    'vert5': '0 -15 0',
 }
 
 
@@ -49,21 +52,44 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
 
     return filenames[0], folder_name
 
+def get_force_field():
+    # sample for x axis from interval [-10,9] one value. This will be used for vert2x vert3x and vert4x
+    # and accounts for the fact that the patient might be slightly tilted when laying in the CT
+    # for y axis:
+    # for vert1 and vert5 sample one value in interval [-15, -10]
+    # for vert2 and vert4 sample one value in interval [-20, -15]
+    # for vert3 sample one value in interval [-30, -50]
 
-def add_collision_function(rootNode):
+    x_axis_force = random.randint(-10, 9)
+    y_axis_force_v1_v5 = random.randint(-15,-10)
+    y_axis_force_v2_v4 = random.randint(-20,-15)
+    y_axis_force_v3 = random.randint(-50,-30)
+
+    force_fields = {
+        # vert        x                            y                          z
+        'vert1':    '0.0'          + ' ' +  str(y_axis_force_v1_v5) + ' ' + '0.0',
+        'vert2': str(x_axis_force) + ' ' +  str(y_axis_force_v2_v4) + ' ' + '0.0',
+        'vert3': str(x_axis_force) + ' ' +  str(y_axis_force_v3)    + ' ' + '0.0',
+        'vert4': str(x_axis_force) + ' ' +  str(y_axis_force_v2_v4) + ' ' + '0.0',
+        'vert5':     '0.0'         + ' ' +  str(y_axis_force_v1_v5) + ' ' + '0.0'
+    }
+    return force_fields
+
+def add_collision_function(root):
     # Collision function
-    rootNode.addObject('DefaultPipeline', verbose='0', name='CollisionPipeline')
-    rootNode.addObject('BruteForceBroadPhase')
-    rootNode.addObject('BVHNarrowPhase')
-    rootNode.addObject('DefaultContactManager', response='PenalityContactForceField', name='collision response')
-    # rootNode.addObject('PenaltyContactForceField', response='default', name='collision response')
+    root.addObject('DefaultPipeline', verbose='0', name='CollisionPipeline')
+    root.addObject('BruteForceBroadPhase')
+    root.addObject('BVHNarrowPhase')
+    root.addObject('DefaultContactManager', response='PenalityContactForceField', name='collision response')
+    # root.addObject('PenaltyContactForceField', response='default', name='collision response')
 
-    rootNode.addObject('LocalMinDistance', name='Proximity', alarmDistance='0.0005', contactDistance='0.000001',
-                       angleCone='0.0')
-    rootNode.addObject('DiscreteIntersection')
+    root.addObject('LocalMinDistance', name='Proximity', alarmDistance='0.0005', contactDistance='0.000001',
+                   angleCone='0.0')
+    root.addObject('DiscreteIntersection')
 
 
-def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_vertebra, save_vtu_to):
+def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_vertebra, save_vtu_to,
+                      constant_force_field, forcesID):
     curr_vert_id = str(nr_vertebra + 1)
     label = str(20 + nr_vertebra)
     curr_vert = parent_node_vertebrae.addChild('vert' + curr_vert_id)
@@ -93,12 +119,12 @@ def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_ver
     visual_model.addObject('IdentityMapping')
 
     # on each vertebra a different force is applied
-    mecha_node.addObject('ConstantForceField', force=constant_force_fields_ours['vert' + curr_vert_id])
+    mecha_node.addObject('ConstantForceField', force=constant_force_field['vert' + curr_vert_id])
 
     mecha_node.addObject('RigidMapping', input='@..', output='@.')
 
     mecha_node.addObject('VTKExporter',
-                         filename=os.path.join(save_vtu_to, str(spine_id) + '_verLev' + label + 'deformed_20_'),
+                         filename=os.path.join(save_vtu_to, str(spine_id) + '_verLev' + label + "_forces" + str(forcesID) + 'deformed_20_'),
                          listening='true', edges='0', triangles='1', quads='0', tetras='0',
                          pointsDataFields='points' + curr_vert_id + '.position', exportEveryNumberOfSteps='20')
 
@@ -136,6 +162,7 @@ def add_springs_between_vertebrae(parent_node_vertebrae, nr_vertebra, springs_da
                                     object2=object2,
                                     spring=springs_data['springs'][curr_vertebrae_pair]['facet_right'])
 
+
 def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points = parent_node_vertebra.addChild('fixed_points' + str(nr_vertebra))
     fixed_points.addObject('MechanicalObject',
@@ -152,16 +179,18 @@ def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
                            indices=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
 
 
-def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
+def createScene(root, spine_id, path_json_file, root_path_vertebrae, constant_force_field, forcesID):
     nr_vertebrae = 5
+    root.addObject('DefaultVisualManagerLoop')
+    root.addObject('DefaultAnimationLoop')
 
     # Visualization style
-    rootNode.addObject('VisualStyle', displayFlags='showVisual showBehaviorModels showInteractionForceFields')
+    root.addObject('VisualStyle', displayFlags='showVisual showBehaviorModels showInteractionForceFields')
 
-    add_collision_function(rootNode)
+    add_collision_function(root)
 
     # Parent node of all vertebrae
-    together = rootNode.addChild('Together')
+    together = root.addChild('Together')
     together.addObject('EulerImplicitSolver', name='cg_odesolver', printLog='0', rayleighStiffness='0.09',
                        rayleighMass='0.1')
     together.addObject('CGLinearSolver', name='linear solver', iterations='1000', tolerance='1e-09', threshold='1e-15')
@@ -170,7 +199,7 @@ def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
     for i in range(nr_vertebrae):
         filename, dirname = get_path_vertebrae_mesh(root_path_vertebrae, spine_id, i)
         add_vertebra_node(parent_node_vertebrae=together, nr_vertebra=i, spine_id=spine_id,
-                          filename_vertebra=filename, save_vtu_to=dirname)
+                          filename_vertebra=filename, save_vtu_to=dirname, constant_force_field=constant_force_field, forcesID=forcesID)
 
     # read springs file
     file = open(path_json_file)
@@ -199,20 +228,20 @@ def createScene(rootNode, spine_id, path_json_file, root_path_vertebrae):
                        object2='@vert5/mecha_node5/points5',
                        spring=json_data['springs']['v5v6'])
 
-    return rootNode
+    return root
 
 
-def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True):
+def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, constant_force_field, forcesID, use_gui=True):
     print("Deforming " + str(spine_id))
     root = Sofa.Core.Node('root')
-    createScene(root, spine_id, path_json_file, root_path_vertebrae)
+    createScene(root, spine_id, path_json_file, root_path_vertebrae, constant_force_field, forcesID)
     Sofa.Simulation.init(root)
 
     if not use_gui:
-        for iteration in range(2):
+        for iteration in range(20):
             print("Iteration:" + str(iteration))
             Sofa.Simulation.animate(root, root.dt.value)
-            #print(str(root.dt.value))
+            # print(str(root.dt.value))
     else:
         # Find out the supported GUIs
         print("Supported GUIs are: " + Sofa.Gui.GUIManager.ListSupportedGUI(","))
@@ -226,12 +255,12 @@ def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, use_gui=True
         Sofa.Gui.GUIManager.MainLoop(root)
         Sofa.Gui.GUIManager.closeGUI()
         print("GUI was closed")
-    #Sofa.Simulation.Deinit(root)
+    # Sofa.Simulation.Deinit(root)
 
     print("Simulation is done.")
 
 
-def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
+def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_deformations_per_spine, forces_folder):
     if (txt_file == None or json_root_folder == None or vertebrae_root_folder == None):
         raise "Please provide all parameters: txt_file, json_root_folder and vertebrae_root_folder when calling the script for deformation of all spines "
         return
@@ -246,11 +275,20 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder):
         # spine_id = spine_ids[0]
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
-        # perform simulation and save the results
-        #try:
-        deform_one_spine(spine_id, json_path, vertebrae_root_folder, use_gui=False)
-        #except Exception:
-        #print("There was something wrong with deforming: " + str(spine_id), file=sys.stderr)
+        for nr_deform in range(nr_deformations_per_spine):
+            force_field = get_force_field()
+
+            # save the current force field:
+            force_fields_for_one_deformation = open(os.path.join(forces_folder, spine_id +  "_" + str(nr_deform) + ".txt"), "w")
+            force_fields_for_one_deformation.write(str(force_field))
+            #force_fields_for_one_deformation.write("testtest")
+            #force_fields_for_one_deformation.write("\n")
+
+            # perform simulation and save the results
+            try:
+                deform_one_spine(spine_id, json_path, vertebrae_root_folder, force_field, nr_deform, use_gui=False)
+            except Exception:
+                print("There was something wrong with deforming: " + str(spine_id), file=sys.stderr)
 
 
 if __name__ == '__main__':
@@ -290,23 +328,33 @@ if __name__ == '__main__':
         help="Activate flag to deform all spines without GUI and save the vtu results"
     )
 
+    arg_parser.add_argument(
+        "--root_folder_forces_files",
+        required=False,
+        dest="forces_folder",
+        help="Root folder where the txt files with force fields will be saved."
+    )
+    nr_deformations_per_spine = 3
     args = arg_parser.parse_args()
     print("Deforming spines with sofa framework")
     # TODO maybe have some type of skip system
     # TODO check what s wrong with 605
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
-    if(args.deform_all):
-        deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae)
+    if (args.deform_all):
+        deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder)
     else:
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
         #spine_id = 'sub-verse835'
-        #spine_id = 'sub-verse519'
-        spine_id = 'sub-verse807'
+        spine_id = 'sub-verse519'
+        #spine_id = 'sub-verse536'
         deform_one_spine(
             spine_id=spine_id,
-            path_json_file= os.path.join("/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json" ),
+            path_json_file=os.path.join(
+                "/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json"),
             root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
-            use_gui=True)
-    
+            constant_force_field=get_force_field(),
+            forcesID=2,
+            use_gui=True,
+        )
 
-
+    # create a new folder in root_path_vertebra and save there the force fields used
