@@ -345,16 +345,20 @@ if __name__ == '__main__':
     else:
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
         #spine_id = 'sub-verse835'
-        spine_id = 'sub-verse519'
-        #spine_id = 'sub-verse536'
+        #spine_id = 'sub-verse519'
+        spine_id = 'sub-verse808'
+        #spine_id = 'sub-verse506'
         deform_one_spine(
             spine_id=spine_id,
             path_json_file=os.path.join(
                 "/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json"),
             root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
-            constant_force_field=get_force_field(),
-            forcesID=2,
+            constant_force_field=constant_force_fields_ours,
+            forcesID=0,
             use_gui=True,
         )
 
     # create a new folder in root_path_vertebra and save there the force fields used
+#TODO figure out what s wrong with the deformations for:
+# -sub-verse811
+# -

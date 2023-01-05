@@ -21,11 +21,18 @@ if __name__ == "__main__":
     )
 
     arg_parser.add_argument(
-        "--root_path_vertebrae",
+        "--root_path_spine",
         required=True,
-        dest="root_path_vertebrae",
-        help="Root path to the vertebrae folders."
+        dest="root_path_spine",
+        help="Root path to the spine folders."
     )
+    arg_parser.add_argument(
+        "--nr_deform_per_spine",
+        required=True,
+        dest="nr_deform_per_spine",
+        help="Number of deformations per spine"
+    )
+
     args = arg_parser.parse_args()
     print("Converting deformed spines from obj format to labelmaps")
     # iterate over the txt file
@@ -36,14 +43,14 @@ if __name__ == "__main__":
     for spine_id in spine_ids:
         print("Processing: " + str(spine_id))
         look_for = "**/*" + str(spine_id) + "*deformed" + '*.obj'
-        filenames = glob.glob(os.path.join(args.root_path_vertebrae, look_for), recursive=True)
-        if (len(filenames) == 0):
-            print("No deformed files could be found for " + str(spine_id), file=sys.stderr)
+        filenames = glob.glob(os.path.join(args.root_path_spine, look_for), recursive=True)
+        if (len(filenames) != int(args.nr_deform_per_spine)):
+            print("No deformed files or more than one could be found for " + str(spine_id), file=sys.stderr)
             continue
 
-        for deformed_file_obj in filenames:
-            # call imfusion console with the correct parameters
+        for deform in range(int(args.nr_deform_per_spine)):
             arguments = ""
-            arguments += placeholders[0] + "=" + deformed_file_obj + " "
-            arguments += placeholders[1] + "=" + deformed_file_obj.replace(".obj", ".nii.gz")
+            # call imfusion console with the correct parameters
+            arguments += placeholders[0] + "=" + filenames[deform] + " "
+            arguments += placeholders[1] + "=" + filenames[deform].replace(".obj", ".nii.gz")
             os.system("ImFusionConsole" + " " + args.workspace_file + " " + arguments)
