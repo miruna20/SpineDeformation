@@ -346,7 +346,7 @@ if __name__ == '__main__':
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
         #spine_id = 'sub-verse835'
         #spine_id = 'sub-verse519'
-        spine_id = 'sub-verse808'
+        spine_id = 'sub-verse605'
         #spine_id = 'sub-verse506'
         deform_one_spine(
             spine_id=spine_id,
@@ -361,4 +361,12 @@ if __name__ == '__main__':
     # create a new folder in root_path_vertebra and save there the force fields used
 #TODO figure out what s wrong with the deformations for:
 # -sub-verse811
-# -
+# -sub-verse521
+# -sub-verse564
+# -sub-verse824
+# -sub-verse818
+# -sub-verse561
+# -sub-verse820
+# -sub-verse605
+# -sub-verse588 is a weird dataset
+# -sub-verse619 --> a lot of springs between left and right facet causes rigidity and therefore wrong deformation

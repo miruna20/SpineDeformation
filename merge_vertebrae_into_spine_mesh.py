@@ -3,6 +3,26 @@ import argparse
 import glob
 import sys
 
+def merge_obj_files(look_for, save_to, root_path_vertebrae,placeholders):
+    lumbar_vertebrae =["verLev20","verLev21","verLev22","verLev23","verLev24"]
+    filenames = sorted(
+        glob.glob(os.path.join(root_path_vertebrae, look_for), recursive=True))
+
+    filenames_lumbar = [filename for filename in filenames if any([lumb in os.path.basename(filename) for lumb in lumbar_vertebrae])]
+
+    if (len(filenames_lumbar) != 5):
+        print("More or less than 5 vertebrae were found for " + str(spine_id),
+              file=sys.stderr)
+        return
+    arguments = ""
+    for vert_lev in range(5):
+        arguments += placeholders[vert_lev] + "=" + filenames_lumbar[vert_lev] + " "
+
+    # add the output path as parameter
+    arguments += placeholders[5] + "=" + save_to
+    print(arguments)
+    # call imfusion console
+    os.system("ImFusionConsole" + " " + args.workspace_file + " " + arguments)
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
@@ -49,20 +69,22 @@ if __name__ == "__main__":
 
     placeholders = ['PathToL20', 'PathToL21', 'PathToL22', 'PathToL23', 'PathToL24', 'PathToSave']
     for spine_id in spine_ids:
+        # merge the undeformed vertebrae into an obj file which contains the lumbar spine
+        print("Merging original undeformed vertebrae of spine: " + str(spine_id) )
+        # find original vertebrae as obj files
+        merge_obj_files(
+            look_for="**/*" + str(spine_id) + '*_msh.obj',
+            save_to= os.path.join(args.root_path_spines,spine_id,spine_id  + "_lumbar_msh.obj"),
+            root_path_vertebrae=args.root_path_vertebrae,
+            placeholders=placeholders
+        )
+
         for deform in range(int(args.nr_deform_per_spine)):
-            print("Processing: " + str(spine_id) + " deformation: " +  str(deform))
-            look_for = "**/*" + str(spine_id) + "*forces" + str(deform) + "deformed" + '*.obj'
-            filenames = sorted(glob.glob(os.path.join(args.root_path_vertebrae, look_for), recursive=True))
-            if (len(filenames) != 5):
-                print("More or less than 5 vertebrae were found for " + str(spine_id) + " and deformation:" + str(deform), file=sys.stderr)
-                continue
-
-            arguments = ""
-            for vert_lev in range(5):
-                arguments += placeholders[vert_lev] + "=" + filenames[vert_lev] + " "
-
-            # add the output path as parameter
-            arguments += placeholders[5] + "=" + os.path.join(args.root_path_spines,spine_id,spine_id + "forcefield" + str(deform) +"_lumbar_deformed.obj")
-            print(arguments)
-            # call imfusion console
-            os.system("ImFusionConsole" + " " + args.workspace_file + " " + arguments)
+            # for each deformation merge the deformed vertebrae into one obj file
+            print("Merging: " + str(spine_id) + " deformation: " +  str(deform))
+            merge_obj_files(
+                look_for= "**/*" + str(spine_id) + "*forces" + str(deform) + "deformed" + '*.obj',
+                save_to=os.path.join(args.root_path_spines,spine_id,spine_id + "forcefield" + str(deform) +"_lumbar_deformed.obj"),
+                root_path_vertebrae=args.root_path_vertebrae,
+                placeholders=placeholders
+            )
