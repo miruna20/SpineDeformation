@@ -5,6 +5,7 @@ import os
 import pathlib
 import argparse
 import json
+import trimesh
 import sys
 
 s_body = 5000
@@ -194,6 +195,12 @@ def get_indices_points_with_selected_normals_within_bb(vert, normal_vector, bb_i
     # get all indices of points that have a certain normal vector e.g [0,0,1]
     normals = np.asarray(vert.vertex_normals)
     indices = [i for i in range(normals.shape[0]) if (np.array_equal(normals[i], normal_vector) and i in bb_indices)]
+    if(len(indices)  == 0):
+        indices = []
+        for i in range(normals.shape[0]):
+            if(i in bb_indices):
+                if(abs(normals[i][0] - normal_vector[0]) < 0.1 and abs(normals[i][1] - normal_vector[1]) < 0.1 and abs(normals[i][2] - normal_vector[2]) < 0.1):
+                    indices.append(i)
     return indices
 
 def get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert,bb_indices):
@@ -220,6 +227,28 @@ def get_indices_points_with_z_coord_smaller_than_center_of_mass(vert, bb_indices
     indices = [i for i in range(vertices.shape[0]) if vertices[i][1] <= z_coord_center_of_mass+10 and i in bb_indices]
     return indices
 
+def visualize_lines_between_indices(ind1,ind2,mesh1,mesh2):
+    pairs_of_indices = [list(a) for a in zip(ind1, ind2)]
+
+    points = []
+    lines = []
+    k = 0
+    for i, j in pairs_of_indices:
+        points.append(mesh1.vertices[i])
+        points.append(mesh2.vertices[j])
+        lines.append([k, k + 1])
+        k += 2
+    print("Visualizing lines between vert")
+    # create lines in between vertebrae bodies
+    colors = [[1, 0, 0] for i in range(len(lines))]
+    line_set = o3d.geometry.LineSet()
+    line_set.points = o3d.utility.Vector3dVector(points)
+    line_set.lines = o3d.utility.Vector2iVector(lines)
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+
+    o3d.visualization.draw_geometries([line_set, mesh1, mesh2])
+
+
 def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
                                          visualization=False):
     np.random.shuffle(indices_vert1)
@@ -231,8 +260,10 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
 
     nr_springs = 0
     if (body):
+        #print("For vertebrae body")
         nr_springs = 800
     else:
+        #print("For facets")
         nr_springs = 250
 
     pairs_of_indices = [list(a) for a in zip(indices_vert1, indices_vert2)]
@@ -252,6 +283,7 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
     #print("nr_springs: " + str(k / 2))
 
     if (visualization):
+        print("Visualizing lines between vert")
         # create lines in between vertebrae bodies
         colors = [[1, 0, 0] for i in range(len(lines))]
         line_set = o3d.geometry.LineSet()
@@ -296,7 +328,7 @@ def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist, visualiza
         springs += "{0} {1} {2} {3} {4}  ".format(i, j, s, d, dist)
 
     if (visualization):
-        # create lines in between vertebrae bodies
+        print("Visualizing fixed_points")
         colors = [[1, 0, 0] for i in range(len(lines))]
         line_set = o3d.geometry.LineSet()
         line_set.points = o3d.utility.Vector3dVector(points)
@@ -311,19 +343,25 @@ def get_indices_of_vertebrae_bodies(vert1, vert2, bb_v1_v2, bb_v2_v1):
     indices_in_bb_v1_v2 = o3d.geometry.OrientedBoundingBox.get_point_indices_within_bounding_box(bb_v1_v2,
                                                                                                  vert1.vertices)
     indices_in_bb_v2_v1 = o3d.geometry.OrientedBoundingBox.get_point_indices_within_bounding_box(bb_v2_v1,
-                                                                                                 vert2.vertices)
+                                                                                                vert2.vertices)
+
+    print("Lines between points with indices within the bounding boxes")
+    visualize_lines_between_indices(indices_in_bb_v1_v2,indices_in_bb_v2_v1,vert1,vert2)
 
     # filter the ones with higher y than the center of mass
     indices_in_bb_v1_v2_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert1,indices_in_bb_v1_v2)
     indices_in_bb_v2_v1_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert2,indices_in_bb_v2_v1)
 
-    # select only points that have the normals parallel to the z axis from positive to negative
-    indices_in_bb_on_surface_v1_v2 = get_indices_points_with_selected_normals_within_bb(vert1, [0, 0, -1],
-                                                                                        indices_in_bb_v1_v2_vert_body)
+    print("Lines between points with indices within the bounding boxes and y coord lower than center of mass")
+    visualize_lines_between_indices(indices_in_bb_v1_v2_vert_body, indices_in_bb_v2_v1_vert_body, vert1, vert2)
 
+    # select only points that have the normals parallel to the z axis from positive to negative
+    indices_in_bb_on_surface_v1_v2 = get_indices_points_with_selected_normals_within_bb(vert1, [0, 0, -1], indices_in_bb_v1_v2_vert_body)
     # select only points that have the normals parallel to the z axis from negative to positive
-    indices_in_bb_on_surface_v2_v1 = get_indices_points_with_selected_normals_within_bb(vert2, [0, 0, 1],
-                                                                                        indices_in_bb_v2_v1_vert_body)
+    indices_in_bb_on_surface_v2_v1 = get_indices_points_with_selected_normals_within_bb(vert2, [0, 0, 1], indices_in_bb_v2_v1_vert_body)
+
+    print("Lines between points with indices within the bounding boxes and normals aligned with z axis")
+    visualize_lines_between_indices(indices_in_bb_on_surface_v1_v2,indices_in_bb_on_surface_v2_v1,vert1,vert2)
 
     return indices_in_bb_on_surface_v1_v2, indices_in_bb_on_surface_v2_v1
 
@@ -378,7 +416,6 @@ def generate_springs_for_one_spine(root_path_spine, spine_id, json_file):
     with open(json_file, 'w', encoding='utf-8') as f:
         json.dump(json_data, f, indent=4)
 
-
 if __name__ == "__main__":
 
     """
@@ -429,5 +466,10 @@ if __name__ == "__main__":
         print("Processing " + str(spine_id))
         try:
             generate_springs_for_one_spine(root_path_spine=args.root_path_vertebrae,spine_id=spine_id,json_file=os.path.join(args.root_json_files,str(spine_id) + ".json"))
-        except Exception:
-            print("Error occured for:  " + str(spine_id), file=sys.stderr)
+        except Exception as e:
+            print("Error occured for:  " + str(spine_id) +str(e), file=sys.stderr)
+
+    """
+    spine_id = "sub-verse833"
+    test_new_alignmend(path_L20_vertebra="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train/sub-verse833_verLev20/sub-verse833_dir-ax_seg-vert_msk_verLev20_msh.obj")
+    """
