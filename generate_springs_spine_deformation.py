@@ -18,6 +18,8 @@ s_for_fixed_points = 1000
 d_for_fixed_points = 10
 length_strings_between_fixed_points = 0.00100
 
+visualize = False
+
 def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
     vertebrae_meshes = []
     for i in range(0, 5):
@@ -31,20 +33,19 @@ def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
         vertebrae_meshes.append(mesh)
     return vertebrae_meshes
 
-def process_vertebrae_bodies(vert1, vert2, s, d, visualization=False):
+def process_vertebrae_bodies(vert1, vert2, s, d):
 
     # get bounding boxes
-    _, vert1_bb2 = get_bounding_boxes_of_vertebra_body(vert1,visualization=visualization)
-    vert2_bb1, _ = get_bounding_boxes_of_vertebra_body(vert2,visualization=visualization)
+    _, vert1_bb2 = get_bounding_boxes_of_vertebra_body(vert1)
+    vert2_bb1, _ = get_bounding_boxes_of_vertebra_body(vert2)
 
     # get indices of the meshes that are in these bounding boxes
     indices_vert1, indices_vert2 = get_indices_of_vertebrae_bodies(vert1, vert2, vert1_bb2, vert2_bb1)
 
     # call print_specs_between_vertebrae
-    return print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
-                                                visualization=visualization)
+    return print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True)
 
-def process_facets(vert1, vert2, s, d, visualization=False):
+def process_facets(vert1, vert2, s, d):
     indices_facet_v1_left, indices_facet_v2_left, indices_facet_v1_right, indices_facet_v2_right = get_indices_of_facets_of_2_vertebrae(
         vert1, vert2)
 
@@ -56,13 +57,13 @@ def process_facets(vert1, vert2, s, d, visualization=False):
     indices_facet_v2_right = get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert2,indices_facet_v2_right)
 
     specs_facet_left = print_spring_specs_between_vertebrae(vert1, vert2, indices_facet_v1_left, indices_facet_v2_left,
-                                                            s, d, body=False,visualization=visualization)
+                                                            s, d, body=False)
     specs_facet_right = print_spring_specs_between_vertebrae(vert1, vert2, indices_facet_v1_right,
-                                                             indices_facet_v2_right, s, d, body=False,visualization=visualization)
+                                                             indices_facet_v2_right, s, d, body=False)
 
     return specs_facet_left, specs_facet_right
 
-def process_fixed_points(vert1, position_bounding_box_for_fixed_points,visualization=False):
+def process_fixed_points(vert1, position_bounding_box_for_fixed_points):
 
     leftbb, rightbb = get_bounding_boxes_of_vertebra_body(vert1)
 
@@ -76,11 +77,10 @@ def process_fixed_points(vert1, position_bounding_box_for_fixed_points,visualiza
                                                                                                           indices_body_t12_v1,
                                                                                                           s_for_fixed_points,
                                                                                                           d_for_fixed_points,
-                                                                                                          length_strings_between_fixed_points,
-                                                                                                          visualization=visualization)
+                                                                                                          length_strings_between_fixed_points)
     return indices_fixed_points, positions_fixed_points, springs_fixed_points
 
-def get_bounding_boxes_of_vertebra_body(fullVertebra, visualization=False):
+def get_bounding_boxes_of_vertebra_body(fullVertebra):
     # find the center of mass of the vertebra
     center_of_mass = fullVertebra.get_center()
 
@@ -134,7 +134,7 @@ def get_bounding_boxes_of_vertebra_body(fullVertebra, visualization=False):
     bb2 = o3d.geometry.OrientedBoundingBox.create_from_points(
         points=o3d.utility.Vector3dVector(np.asarray(bounding_box_face2_points)))
 
-    if (visualization):
+    if visualize:
         print("visualizing bb1 which is pointing towards L(x-1). This should be on the side of the facets")
         o3d.visualization.draw([bb1, fullVertebra])
         print("visualizing bb2 which is pointing towards L(x+1). This should be opposite to the facets")
@@ -142,7 +142,7 @@ def get_bounding_boxes_of_vertebra_body(fullVertebra, visualization=False):
 
     return bb1, bb2
 
-def get_indices_of_facets_of_2_vertebrae(vert1_mesh, vert2_mesh, visualization=True):
+def get_indices_of_facets_of_2_vertebrae(vert1_mesh, vert2_mesh):
     # get centers of the 2 vertebrae
     center_vert1 = vert1_mesh.get_center()
 
@@ -195,6 +195,8 @@ def get_indices_points_with_selected_normals_within_bb(vert, normal_vector, bb_i
     # get all indices of points that have a certain normal vector e.g [0,0,1]
     normals = np.asarray(vert.vertex_normals)
     indices = [i for i in range(normals.shape[0]) if (np.array_equal(normals[i], normal_vector) and i in bb_indices)]
+
+    # if the current set of indices does not have any normals that align perfectly with z axis, allow for a small tolerance
     if(len(indices)  == 0):
         indices = []
         for i in range(normals.shape[0]):
@@ -228,6 +230,7 @@ def get_indices_points_with_z_coord_smaller_than_center_of_mass(vert, bb_indices
     return indices
 
 def visualize_lines_between_indices(ind1,ind2,mesh1,mesh2):
+    # TODO eliminate duplicity between this function and the similar code used in print springs
     pairs_of_indices = [list(a) for a in zip(ind1, ind2)]
 
     points = []
@@ -238,7 +241,7 @@ def visualize_lines_between_indices(ind1,ind2,mesh1,mesh2):
         points.append(mesh2.vertices[j])
         lines.append([k, k + 1])
         k += 2
-    print("Visualizing lines between vert")
+    print("Visualizing all possible lines between vert")
     # create lines in between vertebrae bodies
     colors = [[1, 0, 0] for i in range(len(lines))]
     line_set = o3d.geometry.LineSet()
@@ -248,9 +251,7 @@ def visualize_lines_between_indices(ind1,ind2,mesh1,mesh2):
 
     o3d.visualization.draw_geometries([line_set, mesh1, mesh2])
 
-
-def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True,
-                                         visualization=False):
+def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_vert2, s, d, body=True):
     np.random.shuffle(indices_vert1)
     np.random.shuffle(indices_vert2)
 
@@ -260,10 +261,8 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
 
     nr_springs = 0
     if (body):
-        #print("For vertebrae body")
         nr_springs = 800
     else:
-        #print("For facets")
         nr_springs = 250
 
     pairs_of_indices = [list(a) for a in zip(indices_vert1, indices_vert2)]
@@ -280,10 +279,8 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
         lines.append([k, k + 1])
         k += 2
 
-    #print("nr_springs: " + str(k / 2))
-
-    if (visualization):
-        print("Visualizing lines between vert")
+    if (visualize):
+        print("Visualizing springs that will be used for deformation between vert " + ("bodies" if body else "facets"))
         # create lines in between vertebrae bodies
         colors = [[1, 0, 0] for i in range(len(lines))]
         line_set = o3d.geometry.LineSet()
@@ -294,7 +291,7 @@ def print_spring_specs_between_vertebrae(vert1, vert2, indices_vert1, indices_ve
         o3d.visualization.draw_geometries([line_set, vert1, vert2])
     return accum
 
-def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist, visualization=False):
+def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist):
     """
     Get the positions of the fixed points belonging to v1 and v5 and the corresponding springs
     :param vert1: mesh vertebra
@@ -327,7 +324,7 @@ def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist, visualiza
     for i, j in enumerate(indices_vert1):
         springs += "{0} {1} {2} {3} {4}  ".format(i, j, s, d, dist)
 
-    if (visualization):
+    if (visualize):
         print("Visualizing fixed_points")
         colors = [[1, 0, 0] for i in range(len(lines))]
         line_set = o3d.geometry.LineSet()
@@ -345,23 +342,26 @@ def get_indices_of_vertebrae_bodies(vert1, vert2, bb_v1_v2, bb_v2_v1):
     indices_in_bb_v2_v1 = o3d.geometry.OrientedBoundingBox.get_point_indices_within_bounding_box(bb_v2_v1,
                                                                                                 vert2.vertices)
 
-    print("Lines between points with indices within the bounding boxes")
-    visualize_lines_between_indices(indices_in_bb_v1_v2,indices_in_bb_v2_v1,vert1,vert2)
+    if(visualize):
+        print("Lines between points with indices within the bounding boxes")
+        visualize_lines_between_indices(indices_in_bb_v1_v2,indices_in_bb_v2_v1,vert1,vert2)
 
     # filter the ones with higher y than the center of mass
     indices_in_bb_v1_v2_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert1,indices_in_bb_v1_v2)
     indices_in_bb_v2_v1_vert_body = get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert2,indices_in_bb_v2_v1)
 
-    print("Lines between points with indices within the bounding boxes and y coord lower than center of mass")
-    visualize_lines_between_indices(indices_in_bb_v1_v2_vert_body, indices_in_bb_v2_v1_vert_body, vert1, vert2)
+    if(visualize):
+        print("Lines between points with indices within the bounding boxes and y coord lower than center of mass")
+        visualize_lines_between_indices(indices_in_bb_v1_v2_vert_body, indices_in_bb_v2_v1_vert_body, vert1, vert2)
 
     # select only points that have the normals parallel to the z axis from positive to negative
     indices_in_bb_on_surface_v1_v2 = get_indices_points_with_selected_normals_within_bb(vert1, [0, 0, -1], indices_in_bb_v1_v2_vert_body)
     # select only points that have the normals parallel to the z axis from negative to positive
     indices_in_bb_on_surface_v2_v1 = get_indices_points_with_selected_normals_within_bb(vert2, [0, 0, 1], indices_in_bb_v2_v1_vert_body)
 
-    print("Lines between points with indices within the bounding boxes and normals aligned with z axis")
-    visualize_lines_between_indices(indices_in_bb_on_surface_v1_v2,indices_in_bb_on_surface_v2_v1,vert1,vert2)
+    if(visualize):
+        print("Lines between points with indices within the bounding boxes and normals aligned with z axis")
+        visualize_lines_between_indices(indices_in_bb_on_surface_v1_v2,indices_in_bb_on_surface_v2_v1,vert1,vert2)
 
     return indices_in_bb_on_surface_v1_v2, indices_in_bb_on_surface_v2_v1
 
@@ -385,19 +385,19 @@ def generate_springs_for_one_spine(root_path_spine, spine_id, json_file):
         dict_curr_pair_strings = {}
 
         #print("Generating springs between vertebrae bodies")
-        dict_curr_pair_strings["body"] = process_vertebrae_bodies(v1, v2, s_body, d_body, visualization=args.visualize)
+        dict_curr_pair_strings["body"] = process_vertebrae_bodies(v1, v2, s_body, d_body)
 
         #print("Generating springs between facet joints on the left")
         dict_curr_pair_strings["facet_left"], dict_curr_pair_strings["facet_right"] = process_facets(
-            v1, v2, s_facet, d_facet, visualization=args.visualize)
+            v1, v2, s_facet, d_facet)
 
         dict_pairs[curr_pair_of_vertebra] = dict_curr_pair_strings
 
     # get fixed points
     L1_indices_fixed_points, L1_positions_fixed_points, L1_springs_fixed_positions = process_fixed_points(
-        vertebrae_meshes[0], "prev", visualization=args.visualize)
+        vertebrae_meshes[0], "prev")
     L5_indices_fixed_points, L5_positions_fixed_points, L5_springs_fixed_positions = process_fixed_points(
-        vertebrae_meshes[4], "after", visualization=args.visualize)
+        vertebrae_meshes[4], "after")
 
     dict_pairs["v0v1"] = L1_springs_fixed_positions
     dict_pairs["v5v6"] = L5_springs_fixed_positions
@@ -457,7 +457,7 @@ if __name__ == "__main__":
     print("Generating springs for spine deformation")
     # iterate over these spine ids and get the corresponding L1-L5 vertebrae
     args = arg_parser.parse_args()
-
+    visualize = args.visualize
     # iterate over the txt file and process all spines
     with open(args.txt_file) as file:
         spine_ids = [line.strip() for line in file]
