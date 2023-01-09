@@ -39,7 +39,15 @@ constant_force_fields_ours = {
     'vert4': '10 -20 0',
     'vert5': '0 -15 0',
 }
+constant_force_fields_ours_small = {
+    'vert1': '0.0 0 0.0',
+    'vert2': '0 0 0.0',
+    'vert3': '0 -5 0.0',
+    'vert4': '0 0 0',
+    'vert5': '0 0 0',
+}
 
+debug = True
 
 def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     label = str(vert_id + 20)
@@ -172,6 +180,15 @@ def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points.addObject('MeshTopology',
                            name='Topology',
                            hexas=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
+    if(debug):
+        indices_fixed_points = []
+        split = springs_data['fixed_points_indices']['v' + str(nr_vertebra)].split(' ')
+        for x in split:
+            try:
+                indices_fixed_points.append(int(x))
+            except Exception:
+                continue
+        print("Number of fixed points for vert " + str(nr_vertebra) + ": " + str(len(indices_fixed_points)))
     fixed_points.addObject('UniformMass', name='Mass', vertexMass='1')
     fixed_points.addObject('FixedConstraint',
                            template='Vec3d',
@@ -334,20 +351,25 @@ if __name__ == '__main__':
         dest="forces_folder",
         help="Root folder where the txt files with force fields will be saved."
     )
-    nr_deformations_per_spine = 3
+
+    arg_parser.add_argument(
+        "--nr_deform_per_spine",
+        required=True,
+        dest="nr_deform_per_spine",
+        help="Number of deformed spines per initial spine."
+    )
+
     args = arg_parser.parse_args()
+    nr_deformations_per_spine = int(args.nr_deform_per_spine)
+
     print("Deforming spines with sofa framework")
     # TODO maybe have some type of skip system
-    # TODO check what s wrong with 605
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
     if (args.deform_all):
         deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder)
     else:
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
-        #spine_id = 'sub-verse835'
-        #spine_id = 'sub-verse519'
-        spine_id = 'sub-verse605'
-        #spine_id = 'sub-verse506'
+        spine_id = 'sub-verse518'
         deform_one_spine(
             spine_id=spine_id,
             path_json_file=os.path.join(
@@ -360,13 +382,20 @@ if __name__ == '__main__':
 
     # create a new folder in root_path_vertebra and save there the force fields used
 #TODO figure out what s wrong with the deformations for:
+
+# these datasets "fly away"
 # -sub-verse811
 # -sub-verse521
 # -sub-verse564
-# -sub-verse824
-# -sub-verse818
 # -sub-verse561
 # -sub-verse820
 # -sub-verse605
+
+# Have weird behaviour (goes up and down)
+# -sub-verse824
+# -sub-verse818
+
 # -sub-verse588 is a weird dataset
 # -sub-verse619 --> a lot of springs between left and right facet causes rigidity and therefore wrong deformation
+
+

@@ -8,7 +8,7 @@ import json
 import trimesh
 import sys
 
-s_body = 5000
+s_body = 500
 d_body = 3
 
 s_facet = 8000
@@ -306,9 +306,15 @@ def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist):
     points = []
     k = 0
 
+    # set a certain number of fixed points to verify if this is the cause of flying spines
+    #nr_fixed_points = 2000
+    #idx = np.round(np.linspace(0, len(indices_vert1) - 1, nr_fixed_points, dtype='int'))
+    #filtered_indices_vert1 = np.array(indices_vert1)[idx.astype(int)]
+
+    filtered_indices_vert1 = indices_vert1
     positions = ""
     # the points whose indices are within the bounding box are the fixed points
-    for i in indices_vert1:
+    for i in filtered_indices_vert1:
         positions += "{0} {1} {2}  ".format(vert1.vertices[i][0], vert1.vertices[i][1], vert1.vertices[i][2])
         points.append(vert1.vertices[i])
         points.append(vert1.vertices[i])
@@ -317,11 +323,11 @@ def print_springs_specs_fixed_points(vert1, indices_vert1, s, d, dist):
 
     # we need the indices of these points for the mesh hexagonal shape
     indices = ""
-    for i, _ in enumerate(indices_vert1):
+    for i, _ in enumerate(filtered_indices_vert1):
         indices += "{0} ".format(i)
 
     springs = ""
-    for i, j in enumerate(indices_vert1):
+    for i, j in enumerate(filtered_indices_vert1):
         springs += "{0} {1} {2} {3} {4}  ".format(i, j, s, d, dist)
 
     if (visualize):
