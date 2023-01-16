@@ -370,13 +370,9 @@ if __name__ == '__main__':
 #TODO figure out what s wrong with the deformations for:
 
 # these datasets "fly away"
-# -sub-verse811
-# -sub-verse521
-# -sub-verse561
-# -sub-verse820
-# -sub-verse605
-# -sub-verse824
-# -sub-verse818
+# 646
+# 510
+# 642
 
 # -sub-verse588 is a weird dataset
 # -sub-verse619 --> a lot of springs between left and right facet causes rigidity and therefore wrong deformation
