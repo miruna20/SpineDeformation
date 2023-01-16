@@ -16,9 +16,13 @@ d_facet = 500
 
 s_for_fixed_points = 1000
 d_for_fixed_points = 10
-length_strings_between_fixed_points = 0.00100
+#length_strings_between_fixed_points = 0.001
+length_strings_between_fixed_points = 0.000001
 
-visualize = False
+# offset_center_of_mass = 5
+# radius_search_for_facet = 1
+radius_search_for_facet = 0.001
+offset_center_of_mass = 0.005
 
 def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
     vertebrae_meshes = []
@@ -26,10 +30,11 @@ def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
         path = os.path.join(root_folder, spine_name + "_verLev" + str(20 + i))
         pathVertebra = \
             list(
-                pathlib.Path(path).glob('*msh.obj'))
+                pathlib.Path(path).glob('*scaled_msh.obj'))
         if (len(pathVertebra) != 1):
             raise "There are multiple obj file for this vertebra: " + str(spine_id)
         mesh = o3d.io.read_triangle_mesh(str(pathVertebra[0]))
+        # print("Path vertebra: " + str(pathVertebra[0]))
         vertebrae_meshes.append(mesh)
     return vertebrae_meshes
 
@@ -95,7 +100,7 @@ def get_bounding_boxes_of_vertebra_body(fullVertebra):
     minz = minBounds[2]
     maxz = maxBounds[2]
 
-    crop_point_along_y = center_of_mass[1] + 5
+    crop_point_along_y = center_of_mass[1] + offset_center_of_mass
     middle_point_along_z = math.floor((minz + maxz) / 2)
 
     numpyArray = np.array([
@@ -165,14 +170,20 @@ def get_indices_of_facets_of_2_vertebrae(vert1_mesh, vert2_mesh):
     idx_of_facet_points_in_vert2_left = []
     idx_of_facet_points_in_vert2_right = []
 
-    # o3d.visualization.draw([vert1_vert2_pc])
+    #if visualize:
+    #o3d.visualization.draw([vert1_vert2_pc])
 
+    #print("In total to search for: " + str(nr_points_vert1))
     for idx_vert1 in range(0, nr_points_vert1):
+        #print(str(idx_vert1) + "/" + str(nr_points_vert1))
         # find all points within a radius
-        [k, idx_neighbors, dist] = pcd_tree.search_radius_vector_3d(vert1_vert2_pc.points[idx_vert1], 1)
+        [k, idx_neighbors, dist] = pcd_tree.search_radius_vector_3d(vert1_vert2_pc.points[idx_vert1], 0.001)
 
         # find first index and therefore closest that is larger or equal to nr_points_vert
         index_closest_point_from_pc2 = next(filter(lambda index: index >= nr_points_vert1, idx_neighbors), None)
+
+        #vert1_vert2_pc.colors[idx_vert1] = [1, 0, 0]
+        #np.asarray(vert1_vert2_pc.colors)[idx_neighbors] = [0, 1, 0]
 
         # if None then no point from the other point-cloud is close, so we exclude them
         if (index_closest_point_from_pc2 != None):
@@ -186,8 +197,10 @@ def get_indices_of_facets_of_2_vertebrae(vert1_mesh, vert2_mesh):
                 idx_of_facet_points_in_vert2_right.append(index_closest_point_from_pc2 - nr_points_vert1)
 
             # paint them green
-            vert1_vert2_pc.colors[idx_vert1] = [1, 0, 0]
-            np.asarray(vert1_vert2_pc.colors)[index_closest_point_from_pc2] = [0, 1, 0]
+            if(visualize):
+                vert1_vert2_pc.colors[idx_vert1] = [1, 0, 0]
+                np.asarray(vert1_vert2_pc.colors)[index_closest_point_from_pc2] = [0, 1, 0]
+                o3d.visualization.draw_geometries([vert1_vert2_pc])
 
     return idx_of_facet_points_in_vert1_left, idx_of_facet_points_in_vert2_left, idx_of_facet_points_in_vert1_right, idx_of_facet_points_in_vert2_right
 
@@ -213,20 +226,20 @@ def get_indices_points_with_y_coordinate_lower_than_center_of_mass(vert,bb_indic
 
 def get_indices_points_with_y_coordinate_higher_than_center_of_mass(vert,bb_indices):
     vertices = np.asarray(vert.vertices)
-    y_coord_center_of_mass = vert.get_center()[1]+5
+    y_coord_center_of_mass = vert.get_center()[1]+offset_center_of_mass
     indices = [i for i in range(vertices.shape[0]) if vertices[i][1] >= y_coord_center_of_mass and i in bb_indices]
     return indices
 
 def get_indices_points_with_z_coord_bigger_than_center_of_mass(vert, bb_indices):
     vertices = np.asarray(vert.vertices)
     z_coord_center_of_mass = vert.get_center()[2]
-    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] > z_coord_center_of_mass-10 and i in bb_indices]
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] > z_coord_center_of_mass-2*offset_center_of_mass and i in bb_indices]
     return indices
 
 def get_indices_points_with_z_coord_smaller_than_center_of_mass(vert, bb_indices):
     vertices = np.asarray(vert.vertices)
     z_coord_center_of_mass = vert.get_center()[2]
-    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] <= z_coord_center_of_mass+10 and i in bb_indices]
+    indices = [i for i in range(vertices.shape[0]) if vertices[i][1] <= z_coord_center_of_mass+2*offset_center_of_mass and i in bb_indices]
     return indices
 
 def visualize_lines_between_indices(ind1,ind2,mesh1,mesh2):
@@ -468,12 +481,16 @@ if __name__ == "__main__":
     with open(args.txt_file) as file:
         spine_ids = [line.strip() for line in file]
 
+    # create folder for json files if it doesn't exist
+    if(not os.path.exists(args.root_json_files)):
+        os.mkdir(args.root_json_files)
+
     for spine_id in spine_ids:
         print("Processing " + str(spine_id))
         try:
             generate_springs_for_one_spine(root_path_spine=args.root_path_vertebrae,spine_id=spine_id,json_file=os.path.join(args.root_json_files,str(spine_id) + ".json"))
         except Exception as e:
-            print("Error occured for:  " + str(spine_id) +str(e), file=sys.stderr)
+            print("Error occured for:  " + str(spine_id) + str(e), file=sys.stderr)
 
     """
     spine_id = "sub-verse833"
