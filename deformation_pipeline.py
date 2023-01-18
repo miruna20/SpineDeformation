@@ -78,9 +78,8 @@ if __name__ == '__main__':
     nr_deform_per_spine = args.nr_deform_per_spine
     forces_folder = args.forces_folder
 
-    pipeline = ['generate_springs','deform_spines','convert_vtu_to_obj', 'merge_vertebrae_into_spine',  'convert_obj_to_labelmaps']
-    pipeline = ['convert_vtu_to_obj', 'merge_vertebrae_into_spine',  'convert_obj_to_labelmaps']
-    #pipeline = ['deform_spines']
+    #pipeline = ['generate_springs', 'deform_spines']
+    pipeline = ['merge_vertebrae_into_spine', 'center_spine', 'convert_obj_to_labelmaps']
     if 'select_lumbar_spines' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'get_spines_lumbar_vertebrae.py',
                         '--root_path_spines', root_path_spines,
@@ -121,7 +120,10 @@ if __name__ == '__main__':
                         '--root_path_vertebrae', root_path_vertebrae,
                         '--nr_deform_per_spine', nr_deform_per_spine
                         ])
-
+    if 'center_spine' in pipeline or 'all' in pipeline:
+        subprocess.run(['python', 'center_mesh.py',
+                        '--root_path_spines', root_path_spines,
+                        '--list_file_names', txt_file_lumbar_spines])
     if 'convert_obj_to_labelmaps'in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'convert_obj_to_labelmap.py',
                         '--list_file_names', txt_file_lumbar_spines,

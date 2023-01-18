@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<propertyfile version="1.1" name="" comment="Written by ImFusionLib, 2022-12-12 16:43:31">
+<propertyfile version="1.1" name="" comment="Written by ImFusionLib, 2023-01-17 17:16:34">
 	<param name="workspaceVersion">20</param>
 	<property name="Datasets">
 		<property name="Data">
 			<param name="uid">data0</param>
 			<param name="name">current_spine</param>
+			<param name="transformation">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 </param>
 		</property>
 		<property name="Data">
 			<param name="original">1</param>
@@ -104,7 +105,7 @@
 			<param name="marginPx">10</param>
 			<param name="outsideValue">12</param>
 			<param name="insideValue">13</param>
-			<param name="useGPU">0</param>
+			<param name="useGPU">1</param>
 			<param name="execute">1</param>
 			<param name="inputUids">"data0" </param>
 			<param name="outputUids">"data1" </param>
@@ -119,7 +120,7 @@
 	</property>
 	<property name="Annotations">
 		<property name="GlMesh">
-			<param name="visible">0</param>
+			<param name="visible">1</param>
 			<param name="alwaysVisible">0</param>
 			<param name="editable">1</param>
 			<param name="color">1 1 0 1 </param>
@@ -131,7 +132,7 @@
 			<param name="labelDepthTest">1</param>
 			<param name="labelColor">0 1 1 </param>
 			<param name="labelText"/>
-			<param name="name">sub-verse808_verLev22deformed_20_0</param>
+			<param name="name">sub-verse507forcefield0_lumbar_deformed_centered</param>
 			<param name="renderCrossSection">0</param>
 			<param name="crossSectionColor">1 0 0 0.5 </param>
 			<param name="renderMode">0</param>
@@ -188,8 +189,8 @@
 				<param name="zoom">1</param>
 				<param name="showZoom">1</param>
 				<param name="showIn3D">1</param>
-				<param name="viewMatrix">1 0 0 -19.8125505447388 0 1 0 -88.1694984436035 0 0 1 -871.523498535156 0 0 0 1 </param>
-				<param name="sliceMatrix">1 0 0 -19.8125505447388 0 1 0 -88.1694984436035 0 0 1 -871.523498535156 0 0 0 1 </param>
+				<param name="viewMatrix">1 0 0 0.928450000000002 0 1 0 1.43735 0 0 1 3.1133 0 0 0 1 </param>
+				<param name="sliceMatrix">1 0 0 0.928450000000002 0 1 0 1.43735 0 0 1 3.1133 0 0 0 1 </param>
 				<param name="showOrientationMarkers">0</param>
 				<param name="displayOptionsSource">1</param>
 				<param name="sliceThickness">0</param>
@@ -202,8 +203,8 @@
 				<param name="zoom">1</param>
 				<param name="showZoom">1</param>
 				<param name="showIn3D">1</param>
-				<param name="viewMatrix">0 0 -1 -20.3125505447388 1 0 0 -88.1694984436035 0 -1 0 -872.023498535156 0 0 0 1 </param>
-				<param name="sliceMatrix">0 0 -1 -20.3125505447388 1 0 0 -88.1694984436035 0 -1 0 -872.023498535156 0 0 0 1 </param>
+				<param name="viewMatrix">0 0 -1 0.928450000000002 1 0 0 1.43735 0 -1 0 3.1133 0 0 0 1 </param>
+				<param name="sliceMatrix">0 0 -1 0.928450000000002 1 0 0 1.43735 0 -1 0 3.1133 0 0 0 1 </param>
 				<param name="showOrientationMarkers">0</param>
 				<param name="displayOptionsSource">1</param>
 				<param name="sliceThickness">0</param>
@@ -216,8 +217,8 @@
 				<param name="zoom">1</param>
 				<param name="showZoom">1</param>
 				<param name="showIn3D">1</param>
-				<param name="viewMatrix">1 0 0 -19.8125505447388 0 0 1 -88.1694984436035 0 -1 0 -872.023498535156 0 0 0 1 </param>
-				<param name="sliceMatrix">1 0 0 -19.8125505447388 0 0 1 -88.1694984436035 0 -1 0 -872.023498535156 0 0 0 1 </param>
+				<param name="viewMatrix">1 0 0 0.928450000000002 0 0 1 1.43735 0 -1 0 3.1133 0 0 0 1 </param>
+				<param name="sliceMatrix">1 0 0 0.928450000000002 0 0 1 1.43735 0 -1 0 3.1133 0 0 0 1 </param>
 				<param name="showOrientationMarkers">0</param>
 				<param name="displayOptionsSource">1</param>
 				<param name="sliceThickness">0</param>
@@ -225,11 +226,11 @@
 			<property name="4">
 				<param name="isVisible">1</param>
 				<param name="volumeRendererName">General Purpose Volume Renderer</param>
-				<param name="sceneCenter">-19.8125505447388 -88.1694984436035 -872.023498535156 </param>
+				<param name="sceneCenter">0.928450000000002 1.43735 3.1133 </param>
 				<param name="displayOptionsSource">1</param>
 				<param name="ssaoMode">0</param>
 				<property name="Camera">
-					<param name="poseMatrix">0.999701489781183 -0.0244321781526531 2.16840434497101e-19 17.6524634023361 -0.00119350627836252 -0.0488351876401424 0.998806137341434 866.653001838767 -0.0244030094874893 -0.998507983502821 -0.0488497697956132 -277.268730407389 0 0 -0 1 </param>
+					<param name="poseMatrix">0.328866646738583 0.944376370237481 -0 0.203765573682126 -0.0362525398074415 0.0126244700502536 0.999262916410621 -3.09549234910371 0.943680285912782 -0.328624244530178 0.03838780908752 -1031.28546780329 0 0 -0 1 </param>
 					<param name="mode">0</param>
 					<param name="principalPoint">0.5 0.5 </param>
 					<param name="focalLength">1.37373870972731 1.37373870972731 </param>

@@ -18,8 +18,6 @@ s_for_fixed_points = 1000
 d_for_fixed_points = 10
 length_strings_between_fixed_points = 0.00100
 
-visualize = False
-
 def get_vertebrae_meshes_from_filenames(root_folder, spine_name):
     vertebrae_meshes = []
     for i in range(0, 5):
@@ -473,7 +471,7 @@ if __name__ == "__main__":
         try:
             generate_springs_for_one_spine(root_path_spine=args.root_path_vertebrae,spine_id=spine_id,json_file=os.path.join(args.root_json_files,str(spine_id) + ".json"))
         except Exception as e:
-            print("Error occured for:  " + str(spine_id) +str(e), file=sys.stderr)
+            print("Error occured for:  " + str(spine_id) + str(e), file=sys.stderr)
 
     """
     spine_id = "sub-verse833"

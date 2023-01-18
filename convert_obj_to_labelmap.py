@@ -42,7 +42,7 @@ if __name__ == "__main__":
     placeholders = ['PathToFile', 'PathToSave']
     for spine_id in spine_ids:
         print("Processing: " + str(spine_id))
-        look_for = "**/*" + str(spine_id) + "*deformed" + '*.obj'
+        look_for = "**/*" + str(spine_id) + "*deformed*" + "*centered*" + '*.obj'
         filenames = glob.glob(os.path.join(args.root_path_spine, look_for), recursive=True)
         if (len(filenames) != int(args.nr_deform_per_spine)):
             print("No deformed files or more than one could be found for " + str(spine_id), file=sys.stderr)
