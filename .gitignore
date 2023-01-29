@@ -4,5 +4,5 @@ lastUsedGUI.ini
 runSofa.ini 
 *.vtu
 *.txt
-*.json
 *.nii.gz
+*.log

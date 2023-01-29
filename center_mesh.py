@@ -53,4 +53,3 @@ if __name__ == '__main__':
         for spine_mesh in spine_mesh_paths:
             print("Centering " + str(spine_mesh))
             center(spine_mesh)
-

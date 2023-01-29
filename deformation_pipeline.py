@@ -67,6 +67,13 @@ if __name__ == '__main__':
         help="Root folder where the txt files with force fields will be saved."
     )
 
+    arg_parser.add_argument(
+        "--pipeline",
+        nargs='+',
+        default=['all'],
+        help="Specify the steps of the pipeline that will be executed "
+    )
+
     args = arg_parser.parse_args()
 
     root_path_spines = args.root_path_spines
@@ -78,12 +85,18 @@ if __name__ == '__main__':
     nr_deform_per_spine = args.nr_deform_per_spine
     forces_folder = args.forces_folder
 
-    #pipeline = ['generate_springs', 'deform_spines']
-    pipeline = ['merge_vertebrae_into_spine', 'center_spine', 'convert_obj_to_labelmaps']
+    pipeline = args.pipeline
     if 'select_lumbar_spines' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'get_spines_lumbar_vertebrae.py',
                         '--root_path_spines', root_path_spines,
                         '--list_file_names', txt_file_lumbar_spines])
+
+
+    if 'scale_mesh_down' in pipeline or 'all' in pipeline:
+        subprocess.run(['python', 'scale_mesh_down.py',
+                        '--root_path_vertebrae', root_path_vertebrae,
+                        '--list_file_names', txt_file_lumbar_spines,
+                        '--workspace_scale_mesh', "scale_down_mesh.iws"])
     if 'generate_springs' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'generate_springs_spine_deformation.py',
                         '--root_path_vertebrae', root_path_vertebrae,
@@ -105,13 +118,18 @@ if __name__ == '__main__':
                         '--root_folder_forces_files', forces_folder,
                         '--deform_all'
                         ])
-        # TODO figure out why sofa gets a malloc error after fininshing the simulation
-        # TODO otherwise the pipeline is blocked here
+    # TODO figure out why sofa gets a malloc error after fininshing the simulation
+    # TODO otherwise the pipeline is blocked here
     if 'convert_vtu_to_obj' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'convert_vtu_to_obj.py',
                         '--list_file_names', txt_file_lumbar_spines,
                         '--root_path_vertebrae', root_path_vertebrae
                         ])
+    if 'scale_mesh_up' in pipeline or 'all' in pipeline:
+        subprocess.run(['python', 'scale_mesh_up.py',
+                        '--root_path_vertebrae', root_path_vertebrae,
+                        '--list_file_names', txt_file_lumbar_spines,
+                        '--workspace_scale_mesh', "scale_up_mesh.iws"])
     if 'merge_vertebrae_into_spine' in pipeline or 'all' in pipeline:
         subprocess.run(['python', "merge_vertebrae_into_spine_mesh.py",
                         '--list_file_names', txt_file_lumbar_spines,

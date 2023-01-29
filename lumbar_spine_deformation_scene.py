@@ -17,11 +17,11 @@ SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Intersection")
 SofaRuntime.importPlugin('SofaComponentAll')
 
 constant_force_fields_jane = {
-    'vert1': '0.1 0.0 0.0',
-    'vert2': '0.1 0.1 0.0',
-    'vert3': '0.2 0.1 0.0',
-    'vert4': '0.1 0.1 0',
-    'vert5': '0.1 0 0',
+    'vert1': '0 -0.01 0.0',
+    'vert2': '-0.01 -0.02 0.0',
+    'vert3': '-0.01 -0.05 0.0',
+    'vert4': '-0.01 -0.02 0',
+    'vert5': '0 -0.01 0',
 
 }
 constant_force_fields_scaled = {
@@ -42,19 +42,25 @@ constant_force_fields_ours = {
 constant_force_fields_ours_small = {
     'vert1': '0.0 0 0.0',
     'vert2': '0 0 0.0',
-    'vert3': '0 -5 0.0',
+    'vert3': '0 -50 0.0',
     'vert4': '0 0 0',
     'vert5': '0 0 0',
 }
 
 debug = True
 
+def get_force_field_scaled():
+    # for now return the default one
+    # if this will work well for all spines then we will implement a random sampler for forces in different directions
+    return constant_force_fields_jane
+
+
 def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     label = str(vert_id + 20)
     folder_name = os.path.join(root_path_vertebrae, str(spine_id) + "_verLev" + str(label))
 
     # in the folder look for obj file
-    filenames = glob.glob(os.path.join(folder_name, '*msh.obj'))
+    filenames = glob.glob(os.path.join(folder_name, '*_scaled_msh.obj'))
     if (len(filenames) != 1):
         raise "There are multiple obj file for this vertebra: " + str(spine_id)
 
@@ -68,6 +74,7 @@ def get_force_field():
     # for vert1 and vert5 sample one value in interval [-15, -10]
     # for vert2 and vert4 sample one value in interval [-20, -15]
     # for vert3 sample one value in interval [-30, -50]
+    # TODO update this for the scaled force field
 
     x_axis_force = random.randint(-10, 9)
     y_axis_force_v1_v5 = random.randint(-15,-10)
@@ -106,8 +113,7 @@ def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_ver
     curr_vert = parent_node_vertebrae.addChild('vert' + curr_vert_id)
 
     curr_vert.addObject('MechanicalObject', name='center_mass' + curr_vert_id, template='Rigid3d')
-    curr_vert.addObject('RestShapeSpringsForceField', name='fixedPoints' + curr_vert_id, stiffness='5000',
-                        angularStiffness='50')
+    curr_vert.addObject('RestShapeSpringsForceField', name='fixedPoints' + curr_vert_id, stiffness='5000', angularStiffness='50')
 
     # mechanical model node as child from the current vertebra node
     mecha_node = curr_vert.addChild('mecha_node' + curr_vert_id)
@@ -135,7 +141,7 @@ def add_vertebra_node(parent_node_vertebrae, nr_vertebra, spine_id, filename_ver
     mecha_node.addObject('RigidMapping', input='@..', output='@.')
 
     mecha_node.addObject('VTKExporter',
-                         filename=os.path.join(save_vtu_to, str(spine_id) + '_verLev' + label + "_forces" + str(forcesID) + 'deformed_20_'),
+                         filename=os.path.join(save_vtu_to, str(spine_id) + '_verLev' + label + "_forces" + str(forcesID) + 'scaled_deformed_20_'),
                          listening='true', edges='0', triangles='1', quads='0', tetras='0',
                          pointsDataFields='points' + curr_vert_id + '.position', exportEveryNumberOfSteps='20')
 
@@ -211,8 +217,8 @@ def createScene(root, spine_id, path_json_file, root_path_vertebrae, constant_fo
 
     # Parent node of all vertebrae
     together = root.addChild('Together')
-    together.addObject('EulerImplicitSolver', name='cg_odesolver', printLog='0', rayleighStiffness='0.09',
-                       rayleighMass='0.1')
+    together.addObject('EulerImplicitSolver', name='cg_odesolver', printLog='0', rayleighStiffness='0.09',rayleighMass='0.1')
+    #together.addObject('EulerImplicitSolver', name='cg_odesolver', printLog='0', rayleighStiffness='9',rayleighMass='10')
     together.addObject('CGLinearSolver', name='linear solver', iterations='1000', tolerance='1e-09', threshold='1e-15')
 
     # mech objects of vertebrae
@@ -296,7 +302,7 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_defo
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
         for nr_deform in range(nr_deformations_per_spine):
-            force_field = get_force_field()
+            force_field = get_force_field_scaled()
 
             # save the current force field:
             force_fields_for_one_deformation = open(os.path.join(forces_folder, spine_id +  "_" + str(nr_deform) + ".txt"), "w")
@@ -365,6 +371,10 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
     nr_deformations_per_spine = int(args.nr_deform_per_spine)
 
+    # create folder for forces files if it doesn't exist
+    if(not os.path.exists(args.forces_folder)):
+        os.mkdir(args.forces_folder)
+
     print("Deforming spines with sofa framework")
     # TODO maybe have some type of skip system
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
@@ -372,13 +382,13 @@ if __name__ == '__main__':
         deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder)
     else:
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
-        spine_id = 'sub-verse518'
+        spine_id = 'sub-verse807'
         deform_one_spine(
             spine_id=spine_id,
             path_json_file=os.path.join(
-                "/home/miruna20/Documents/Thesis/SpineDeformation/script/SpineDeformation/results", spine_id + ".json"),
-            root_path_vertebrae="/home/miruna20/Documents/Thesis/SpineDeformation/vertebrae/train",
-            constant_force_field=constant_force_fields_ours,
+                args.root_json_files, spine_id + ".json"),
+            root_path_vertebrae=args.root_path_vertebrae,
+            constant_force_field=constant_force_fields_jane,
             forcesID=0,
             use_gui=True,
         )
@@ -387,16 +397,9 @@ if __name__ == '__main__':
 #TODO figure out what s wrong with the deformations for:
 
 # these datasets "fly away"
-# -sub-verse811
-# -sub-verse521
-# -sub-verse564
-# -sub-verse561
-# -sub-verse820
-# -sub-verse605
-
-# Have weird behaviour (goes up and down)
-# -sub-verse824
-# -sub-verse818
+# 646
+# 510
+# 642
 
 # -sub-verse588 is a weird dataset
 # -sub-verse619 --> a lot of springs between left and right facet causes rigidity and therefore wrong deformation
