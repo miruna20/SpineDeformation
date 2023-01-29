@@ -66,6 +66,33 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
 
     return filenames[0], folder_name
 
+def get_force_field():
+    """
+    # sample for x axis from interval [-10,9] one value. This will be used for vert2x vert3x and vert4x
+    # and accounts for the fact that the patient might be slightly tilted when laying in the CT
+    # for y axis:
+    # for vert1 and vert5 sample one value in interval [-15, -10]
+    # for vert2 and vert4 sample one value in interval [-20, -15]
+    # for vert3 sample one value in interval [-30, -50]
+    # TODO update this for the scaled force field
+
+    x_axis_force = random.randint(-10, 9)
+    y_axis_force_v1_v5 = random.randint(-15,-10)
+    y_axis_force_v2_v4 = random.randint(-20,-15)
+    y_axis_force_v3 = random.randint(-50,-30)
+
+    force_fields = {
+        # vert        x                            y                          z
+        'vert1':    '0.0'          + ' ' +  str(y_axis_force_v1_v5) + ' ' + '0.0',
+        'vert2': str(x_axis_force) + ' ' +  str(y_axis_force_v2_v4) + ' ' + '0.0',
+        'vert3': str(x_axis_force) + ' ' +  str(y_axis_force_v3)    + ' ' + '0.0',
+        'vert4': str(x_axis_force) + ' ' +  str(y_axis_force_v2_v4) + ' ' + '0.0',
+        'vert5':     '0.0'         + ' ' +  str(y_axis_force_v1_v5) + ' ' + '0.0'
+    }
+    """
+
+    return constant_force_fields_ours
+
 def add_collision_function(root):
     # Collision function
     root.addObject('DefaultPipeline', verbose='0', name='CollisionPipeline')

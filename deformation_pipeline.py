@@ -86,7 +86,6 @@ if __name__ == '__main__':
     forces_folder = args.forces_folder
 
     pipeline = args.pipeline
-
     if 'select_lumbar_spines' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'get_spines_lumbar_vertebrae.py',
                         '--root_path_spines', root_path_spines,
