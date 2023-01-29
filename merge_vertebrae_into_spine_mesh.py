@@ -5,10 +5,11 @@ import sys
 
 def merge_obj_files(look_for, save_to, root_path_vertebrae,placeholders):
     lumbar_vertebrae =["verLev20","verLev21","verLev22","verLev23","verLev24"]
+
     filenames = sorted(
         glob.glob(os.path.join(root_path_vertebrae, look_for), recursive=True))
 
-    filenames_lumbar = [filename for filename in filenames if any([lumb in os.path.basename(filename) for lumb in lumbar_vertebrae])]
+    filenames_lumbar = [filename for filename in filenames if any([lumb in os.path.basename(filename) for lumb in lumbar_vertebrae]) and 'scaled' not in os.path.basename(filename)]
 
     if (len(filenames_lumbar) != 5):
         print("More or less than 5 vertebrae were found for " + str(spine_id),
@@ -73,8 +74,8 @@ if __name__ == "__main__":
         print("Merging original undeformed vertebrae of spine: " + str(spine_id) )
         # find original vertebrae as obj files
         merge_obj_files(
-            look_for="**/*" + str(spine_id) + '*_scaled_msh.obj',
-            save_to= os.path.join(args.root_path_spines,spine_id,spine_id  + "scaled_lumbar_msh.obj"),
+            look_for="**/*" + str(spine_id) + '*_msh.obj',
+            save_to= os.path.join(args.root_path_spines,spine_id,spine_id  + "lumbar_msh.obj"),
             root_path_vertebrae=args.root_path_vertebrae,
             placeholders=placeholders
         )
@@ -83,8 +84,8 @@ if __name__ == "__main__":
             # for each deformation merge the deformed vertebrae into one obj file
             print("Merging: " + str(spine_id) + " deformation: " +  str(deform))
             merge_obj_files(
-                look_for= "**/*" + str(spine_id) + "*forces" + str(deform) + "scaled_deformed" + '*.obj',
-                save_to=os.path.join(args.root_path_spines,spine_id,spine_id + "forcefield" + str(deform) +"scaled_lumbar_deformed.obj"),
+                look_for= "**/*" + str(spine_id) + "*forces*" + str(deform) + "*deformed*" + '*.obj',
+                save_to=os.path.join(args.root_path_spines,spine_id,spine_id + "forcefield" + str(deform) +"_lumbar_deformed.obj"),
                 root_path_vertebrae=args.root_path_vertebrae,
                 placeholders=placeholders
             )
