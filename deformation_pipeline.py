@@ -10,6 +10,16 @@ if __name__ == '__main__':
     #4. Convert vtu to obj
     #5. Merge all obj files from one spine into one mesh file. 
     #5. Run Imfusion workspace file and compute labelmaps from obj files (will further be used for ultrasound simulation)
+    
+    Folder structure for this pipeline:
+    - root_path_spines directory:
+        <root_path_spines>/<spine_id>/<spine_id>*.json --> json files are required to determine which spine_ids contain lumbar vertebrae
+        
+    - root_path_vertebrae:
+        <root_path_vertebrae>/<spine_id>/<spine_id>*_msh.obj --> mesh files of individual vertebrae are used for deformation
+        --> to separate spine segmentations into vertebrae segmentations and transform segmentation to mesh check 
+            - "https://github.com/miruna20/thesis/blob/main/separate_spine_into_vertebrae.py"
+            - "https://github.com/miruna20/thesis/blob/main/convert_segmentation_into_mesh.py"
     """
     arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
 
