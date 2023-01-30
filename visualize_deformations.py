@@ -40,11 +40,11 @@ if __name__ == "__main__":
     with open(args.txt_file) as file:
         spine_ids = [line.strip() for line in file]
 
-    placeholders = ['PathToInitialLumbarSpine', 'PathToDeformedLumbarSpine']
+    placeholders = ['NameInitialMesh', 'PathToInitialLumbarSpine', 'NameDeformedMesh', 'PathToDeformedLumbarSpine']
     for spine_id in spine_ids:
 
         # find original vertebrae as obj files
-        look_for = "**/*" + str(spine_id) + '_lumbar_msh.obj'
+        look_for = "**/*" + str(spine_id) + '*_msh.obj'
         filename_undeformed_spine = sorted(glob.glob(os.path.join(args.root_path_spines, look_for), recursive=True))
 
         if (len(filename_undeformed_spine) != 1):
@@ -57,17 +57,29 @@ if __name__ == "__main__":
             print("Visualizing: " + str(spine_id) + " deformation: " +  str(deform))
             look_for = "**/*" + str(spine_id) + "*forcefield" + str(deform) + "*deformed" + '*.obj'
             filename_deformed_spine = sorted(glob.glob(os.path.join(args.root_path_spines, look_for), recursive=True))
+            filename_deformed_spine = [filename for filename in filename_deformed_spine if
+                                         'centered' not in os.path.basename(filename)]
 
             if (len(filename_deformed_spine) != 1):
                 print("More or less than 1 spine was found for " + str(spine_id) + " and deformation:" + str(deform), file=sys.stderr)
                 continue
             arguments = ""
+            for p in placeholders:
 
-            # add paths of the original spine
-            arguments += placeholders[0] + "=" + filename_undeformed_spine[0] + " "
+                if p == 'NameInitialMesh':
+                    value = os.path.basename(filename_undeformed_spine[0])
 
-            # add paths of the deformed vertebrae
-            arguments += placeholders[1] + "=" + filename_deformed_spine[0] + " "
+                elif p == 'PathToInitialLumbarSpine':
+                    value = filename_undeformed_spine[0]
+
+                elif p == 'NameDeformedMesh':
+                    value = os.path.basename(filename_deformed_spine[0])
+
+                elif p == 'PathToDeformedLumbarSpine':
+                    value = filename_deformed_spine[0]
+
+                # add paths of the deformed vertebrae
+                arguments += p + "=" + value + " "
 
             # call ImFusionSuite and visualize the initial lumbar spine vs the deformed spine
             os.system("ImFusionSuite" + " " + args.workspace_file + " " + arguments)

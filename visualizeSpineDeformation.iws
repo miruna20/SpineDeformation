@@ -4,12 +4,12 @@
 	<property name="Datasets">
 		<property name="Data">
 			<param name="uid">data0</param>
-			<param name="name">sub-verse808_lumbar_msh</param>
+			<param name="name">%(NameInitialMesh)</param>
 			<param name="transformation">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 </param>
 		</property>
 		<property name="Data">
 			<param name="uid">data1</param>
-			<param name="name">sub-verse808forcefield0_lumbar_deformed</param>
+			<param name="name">%(NameDeformedMesh)</param>
 			<param name="transformation">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 </param>
 		</property>
 	</property>
@@ -55,7 +55,7 @@
 			<param name="labelDepthTest">1</param>
 			<param name="labelColor">0 1 1 </param>
 			<param name="labelText"/>
-			<param name="name">sub-verse808_lumbar_msh</param>
+			<param name="name">%(NameInitialMesh)</param>
 			<param name="renderCrossSection">0</param>
 			<param name="crossSectionColor">1 0 0 0.5 </param>
 			<param name="renderMode">0</param>
@@ -97,7 +97,7 @@
 			<param name="labelDepthTest">1</param>
 			<param name="labelColor">0 1 1 </param>
 			<param name="labelText"/>
-			<param name="name">sub-verse808forcefield0_lumbar_deformed</param>
+			<param name="name">%(NameDeformedMesh)</param>
 			<param name="renderCrossSection">0</param>
 			<param name="crossSectionColor">1 0 0 0.5 </param>
 			<param name="renderMode">0</param>

@@ -16,7 +16,7 @@ SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Algorithm")
 SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Intersection")
 SofaRuntime.importPlugin('SofaComponentAll')
 
-constant_force_fields_jane = {
+constant_force_fields= {
     'vert1': '0 -0.01 0.0',
     'vert2': '-0.01 -0.02 0.0',
     'vert3': '-0.01 -0.05 0.0',
@@ -24,36 +24,6 @@ constant_force_fields_jane = {
     'vert5': '0 -0.01 0',
 
 }
-constant_force_fields_scaled = {
-    'vert1': '0.0 -50 0.0',
-    'vert2': '50 -100 0.0',
-    'vert3': '50 -200 0.0',
-    'vert4': '50 -100 0',
-    'vert5': '0 -50 0',
-
-}
-constant_force_fields_ours = {
-    'vert1': '0.0 -15 0.0',
-    'vert2': '10 -20 0.0',
-    'vert3': '10 -50 0.0',
-    'vert4': '10 -20 0',
-    'vert5': '0 -15 0',
-}
-constant_force_fields_ours_small = {
-    'vert1': '0.0 0 0.0',
-    'vert2': '0 0 0.0',
-    'vert3': '0 -50 0.0',
-    'vert4': '0 0 0',
-    'vert5': '0 0 0',
-}
-
-debug = True
-
-def get_force_field_scaled():
-    # for now return the default one
-    # if this will work well for all spines then we will implement a random sampler for forces in different directions
-    return constant_force_fields_jane
-
 
 def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     label = str(vert_id + 20)
@@ -67,19 +37,18 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
     return filenames[0], folder_name
 
 def get_force_field():
-    """
-    # sample for x axis from interval [-10,9] one value. This will be used for vert2x vert3x and vert4x
+
+    # sample for x axis from interval [-0.01,0.009] one value. This will be used for vert2x vert3x and vert4x
     # and accounts for the fact that the patient might be slightly tilted when laying in the CT
     # for y axis:
-    # for vert1 and vert5 sample one value in interval [-15, -10]
-    # for vert2 and vert4 sample one value in interval [-20, -15]
-    # for vert3 sample one value in interval [-30, -50]
-    # TODO update this for the scaled force field
+    # for vert1 and vert5 sample one value in interval [-0.015, -0.01]
+    # for vert2 and vert4 sample one value in interval [-0.02, -0.015]
+    # for vert3 sample one value in interval [-0.04, -0.05]
 
-    x_axis_force = random.randint(-10, 9)
-    y_axis_force_v1_v5 = random.randint(-15,-10)
-    y_axis_force_v2_v4 = random.randint(-20,-15)
-    y_axis_force_v3 = random.randint(-50,-30)
+    x_axis_force = random.randint(-10, 9) * 0.001
+    y_axis_force_v1_v5 = random.randint(-15,-10) * 0.001
+    y_axis_force_v2_v4 = random.randint(-20,-15) * 0.001
+    y_axis_force_v3 = random.randint(-50,-30) * 0.001
 
     force_fields = {
         # vert        x                            y                          z
@@ -89,9 +58,8 @@ def get_force_field():
         'vert4': str(x_axis_force) + ' ' +  str(y_axis_force_v2_v4) + ' ' + '0.0',
         'vert5':     '0.0'         + ' ' +  str(y_axis_force_v1_v5) + ' ' + '0.0'
     }
-    """
 
-    return constant_force_fields_ours
+    return force_fields
 
 def add_collision_function(root):
     # Collision function
@@ -189,15 +157,7 @@ def add_fixed_points(parent_node_vertebra, nr_vertebra, springs_data):
     fixed_points.addObject('MeshTopology',
                            name='Topology',
                            hexas=springs_data['fixed_points_indices']['v' + str(nr_vertebra)])
-    if(debug):
-        indices_fixed_points = []
-        split = springs_data['fixed_points_indices']['v' + str(nr_vertebra)].split(' ')
-        for x in split:
-            try:
-                indices_fixed_points.append(int(x))
-            except Exception:
-                continue
-        print("Number of fixed points for vert " + str(nr_vertebra) + ": " + str(len(indices_fixed_points)))
+
     fixed_points.addObject('UniformMass', name='Mass', vertexMass='1')
     fixed_points.addObject('FixedConstraint',
                            template='Vec3d',
@@ -302,7 +262,7 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_defo
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
         for nr_deform in range(nr_deformations_per_spine):
-            force_field = get_force_field_scaled()
+            force_field = get_force_field()
 
             # save the current force field:
             force_fields_for_one_deformation = open(os.path.join(forces_folder, spine_id +  "_" + str(nr_deform) + ".txt"), "w")
@@ -376,7 +336,7 @@ if __name__ == '__main__':
         os.mkdir(args.forces_folder)
 
     print("Deforming spines with sofa framework")
-    # TODO maybe have some type of skip system
+
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
     if (args.deform_all):
         deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder)
@@ -388,20 +348,7 @@ if __name__ == '__main__':
             path_json_file=os.path.join(
                 args.root_json_files, spine_id + ".json"),
             root_path_vertebrae=args.root_path_vertebrae,
-            constant_force_field=constant_force_fields_jane,
+            constant_force_field=constant_force_fields,
             forcesID=0,
             use_gui=True,
         )
-
-    # create a new folder in root_path_vertebra and save there the force fields used
-#TODO figure out what s wrong with the deformations for:
-
-# these datasets "fly away"
-# 646
-# 510
-# 642
-
-# -sub-verse588 is a weird dataset
-# -sub-verse619 --> a lot of springs between left and right facet causes rigidity and therefore wrong deformation
-
-

@@ -6,3 +6,4 @@ runSofa.ini
 *.txt
 *.nii.gz
 *.log
+results/
