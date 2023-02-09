@@ -45,7 +45,7 @@ if __name__ == "__main__":
         look_for = "**/*" + str(spine_id) + "*deformed*" + "*centered*" + '*.obj'
         filenames = glob.glob(os.path.join(args.root_path_spine, look_for), recursive=True)
         if (len(filenames) != int(args.nr_deform_per_spine)):
-            print("No deformed files or more than one could be found for " + str(spine_id), file=sys.stderr)
+            print("No deformed files or more than number of deformations could be found for " + str(spine_id), file=sys.stderr)
             continue
 
         for deform in range(int(args.nr_deform_per_spine)):

@@ -21,6 +21,10 @@ if __name__ == '__main__':
             - "https://github.com/miruna20/thesis/blob/main/separate_spine_into_vertebrae.py"
             - "https://github.com/miruna20/thesis/blob/main/convert_segmentation_into_mesh.py"
     """
+
+    #TODO pipe the results to a log txt file
+    #TODO measure the running time of each step individually
+
     arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
 
     arg_parser.add_argument(
@@ -148,10 +152,12 @@ if __name__ == '__main__':
                         '--root_path_vertebrae', root_path_vertebrae,
                         '--nr_deform_per_spine', nr_deform_per_spine
                         ])
-    if 'center_spine' in pipeline or 'all' in pipeline:
+    if 'center_spine_and_vertebrae' in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'center_mesh.py',
                         '--root_path_spines', root_path_spines,
-                        '--list_file_names', txt_file_lumbar_spines])
+                        '--root_path_vertebrae', root_path_vertebrae,
+                        '--list_file_names', txt_file_lumbar_spines,
+                        '--nr_deform_per_spine', nr_deform_per_spine])
     if 'convert_obj_to_labelmaps'in pipeline or 'all' in pipeline:
         subprocess.run(['python', 'convert_obj_to_labelmap.py',
                         '--list_file_names', txt_file_lumbar_spines,

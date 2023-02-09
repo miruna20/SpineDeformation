@@ -5,7 +5,6 @@
 		<property name="Data">
 			<param name="uid">data0</param>
 			<param name="name">current_spine</param>
-			<param name="transformation">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 </param>
 		</property>
 		<property name="Data">
 			<param name="original">1</param>

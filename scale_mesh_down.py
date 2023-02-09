@@ -40,6 +40,7 @@ if __name__ == '__main__':
         # get the paths for the segmentations of all vertebrae belonging to this spine
         unique_identifier = "*/**" + str(spine_id) + "*_msh.obj"
         vert_mesh_paths = sorted(glob.glob(os.path.join(args.root_path_vertebrae, unique_identifier), recursive=True))
+        vert_mesh_paths = [vert_path for vert_path in vert_mesh_paths if 'scaled' not in os.path.basename(vert_path)]
 
         for vert_mesh_path in vert_mesh_paths:
             arguments_imfusion = ""
