@@ -3,6 +3,25 @@ import sys
 import argparse
 import glob
 import open3d as o3d
+from pathlib import Path
+
+
+def get_name_deformed_spine(spine_id, deform):
+    return spine_id + "forcefield" + str(deform) + "_lumbar_deformed.obj"
+
+def get_name_deformed_vertebra(spine_id,verLev,deform):
+    return spine_id + "_verLev" + str(verLev) + "_forces" + str(deform) + "_deformed_20_0.obj"
+
+def get_vertebrae_meshes_deformed_paths(vertebrae_dir, spine_id,deform):
+    vertebrae_meshes = []
+
+    # get all 5 vertebrae paths for one spine id and one deformation
+    for i in range(20,25):
+        curr_vert_path = os.path.join(vertebrae_dir,spine_id + "_verLev" + str(i),get_name_deformed_vertebra(spine_id, i, deform ))
+        if(not Path(curr_vert_path).is_file()):
+            print("No deformed vertebra found for spine %s, vert %s and deform %d" % (spine_id, str(i), deform), file=sys.stderr)
+        vertebrae_meshes.append(curr_vert_path)
+    return vertebrae_meshes
 
 def center(spine_path, vert_paths):
     # read mesh
@@ -23,7 +42,7 @@ def center(spine_path, vert_paths):
         curr_vert = o3d.io.read_triangle_mesh(vert_path)
         vertices_curr_vert = curr_vert.vertices - centerSpine
         curr_vert.vertices = o3d.utility.Vector3dVector(vertices_curr_vert)
-        o3d.io.write_triangle_mesh(vert_path.replace("_deformed_", "_deformed_centered_"),curr_vert)
+        o3d.io.write_triangle_mesh(vert_path.replace("_deformed_", "_deformed_centered_"), curr_vert)
 
 
 if __name__ == '__main__':
@@ -63,27 +82,14 @@ if __name__ == '__main__':
     with open(args.txt_file) as file:
         spine_ids = [line.strip() for line in file]
 
-
     for spine_id in spine_ids:
         for deform in range(int(args.nr_deform_per_spine)):
-            print("Centering the spine and vertebrae of: " + str(spine_id) + "and deform " + str(deform))
+            print("Centering the spine and vertebrae of: " + str(spine_id) + " and deform " + str(deform))
             # get the paths to the spine with current spine_id and deformation number
-            unique_identifier_spine = "*/**" + str(spine_id)  + "*forcefield" +str(deform) +  "*lumbar_deformed.obj"
-            spine_mesh_path = sorted(glob.glob(os.path.join(args.root_path_spines, unique_identifier_spine), recursive=True))
+            spine_mesh_path = os.path.join(args.root_path_spines, spine_id, get_name_deformed_spine(spine_id, deform))
+            if (not Path(spine_mesh_path).is_file()):
+                print("No deformed mesh found for spine %s and deform %d" % (spine_id, deform), file=sys.stderr)
 
-            if (len(spine_mesh_path) != 1):
-                print("None or more than one mesh was found for spine: " + str(spine_id) + "and deform: " + str(deform), file=sys.stderr)
-                continue
-            spine_mesh_path = spine_mesh_path[0]
-
-
-            unique_identifier_vert = "*/**" + str(spine_id) + "*forces" + str(deform) + "_deformed_" + "*.obj"
-            # find paths of the deformed vertebrae
-            vertebrae_mesh_paths = sorted(glob.glob(os.path.join(args.root_path_vertebrae, unique_identifier_vert), recursive=True))
-
-            if (len(vertebrae_mesh_paths) != int(args.nr_deform_per_spine)):
-                print("The number of vertebrae meshes should match the number of deformations per spine for : " + str(spine_id) + "and deform: " + str(deform),
-                      file=sys.stderr)
-                continue
+            vertebrae_mesh_paths = get_vertebrae_meshes_deformed_paths(args.root_path_vertebrae, spine_id, deform)
 
             center(spine_mesh_path, vertebrae_mesh_paths)
