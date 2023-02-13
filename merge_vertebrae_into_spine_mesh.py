@@ -26,7 +26,7 @@ def merge_obj_files(look_for, save_to, root_path_vertebrae,placeholders):
     os.system("ImFusionConsole" + " " + args.workspace_file + " " + arguments)
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description="Generate strings in between vertebrae for spine deformation")
+    arg_parser = argparse.ArgumentParser(description="Merge multiple vertebrae meshes into one spine mesh")
 
     arg_parser.add_argument(
         "--list_file_names",

@@ -62,13 +62,6 @@ if __name__ == '__main__':
     )
 
     arg_parser.add_argument(
-        "--workspace_file_obj_to_labelmap",
-        required=True,
-        dest="workspace_file_obj_to_labelmap",
-        help="ImFusion workspace files that has all of the necessary algo info to transform from object to labelmap"
-    )
-
-    arg_parser.add_argument(
         "--nr_deform_per_spine",
         required=True,
         dest="nr_deform_per_spine",
@@ -95,7 +88,6 @@ if __name__ == '__main__':
     txt_file_lumbar_spines = args.txt_file
     root_folder_json_files = args.root_json_files
     workspace_file_merge_obj_files = args.workspace_file_merge_obj_files
-    workspace_file_obj_to_labelmap = args.workspace_file_obj_to_labelmap
     nr_deform_per_spine = args.nr_deform_per_spine
     forces_folder = args.forces_folder
 
@@ -158,10 +150,3 @@ if __name__ == '__main__':
                         '--root_path_vertebrae', root_path_vertebrae,
                         '--list_file_names', txt_file_lumbar_spines,
                         '--nr_deform_per_spine', nr_deform_per_spine])
-    if 'convert_obj_to_labelmaps'in pipeline or 'all' in pipeline:
-        subprocess.run(['python', 'convert_obj_to_labelmap.py',
-                        '--list_file_names', txt_file_lumbar_spines,
-                        '--workspace_file', workspace_file_obj_to_labelmap,
-                        '--root_path_spine', root_path_spines,
-                        '--nr_deform_per_spine', nr_deform_per_spine
-                        ])
