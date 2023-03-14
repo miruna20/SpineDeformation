@@ -16,13 +16,20 @@ SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Algorithm")
 SofaRuntime.importPlugin("Sofa.Component.Collision.Detection.Intersection")
 SofaRuntime.importPlugin('SofaComponentAll')
 
-constant_force_fields= {
+constant_force_fields_on_anterior = {
+    'vert1': '0 0.01 0.0',
+    'vert2': '0 0.02 0.0',
+    'vert3': '0 0.07 0.0',
+    'vert4': '0 0.02 0',
+    'vert5': '0 0.01 0',
+}
+
+constant_force_fields_on_posterior= {
     'vert1': '0 -0.01 0.0',
     'vert2': '-0.01 -0.02 0.0',
     'vert3': '-0.01 -0.05 0.0',
     'vert4': '-0.01 -0.02 0',
     'vert5': '0 -0.01 0',
-
 }
 
 def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
@@ -36,7 +43,7 @@ def get_path_vertebrae_mesh(root_path_vertebrae, spine_id, vert_id):
 
     return filenames[0], folder_name
 
-def get_force_field():
+def get_force_field(anterior = True):
 
     # sample for x axis from interval [-0.01,0.009] one value. This will be used for vert2x vert3x and vert4x
     # and accounts for the fact that the patient might be slightly tilted when laying in the CT
@@ -44,11 +51,16 @@ def get_force_field():
     # for vert1 and vert5 sample one value in interval [-0.015, -0.01]
     # for vert2 and vert4 sample one value in interval [-0.02, -0.015]
     # for vert3 sample one value in interval [-0.04, -0.05]
-
-    x_axis_force = random.randint(-10, 9) * 0.001
-    y_axis_force_v1_v5 = random.randint(-15,-10) * 0.001
-    y_axis_force_v2_v4 = random.randint(-20,-15) * 0.001
-    y_axis_force_v3 = random.randint(-50,-30) * 0.001
+    if(anterior):
+        x_axis_force = random.randint(-10, 9) * 0.001
+        y_axis_force_v1_v5 = random.randint(15, 10) * 0.001
+        y_axis_force_v2_v4 = random.randint(20, 15) * 0.001
+        y_axis_force_v3 = random.randint(50, 30) * 0.001
+    else:
+        x_axis_force = random.randint(-10, 9) * 0.001
+        y_axis_force_v1_v5 = random.randint(-15,-10) * 0.001
+        y_axis_force_v2_v4 = random.randint(-20,-15) * 0.001
+        y_axis_force_v3 = random.randint(-50,-30) * 0.001
 
     force_fields = {
         # vert        x                            y                          z
@@ -246,7 +258,7 @@ def deform_one_spine(spine_id, path_json_file, root_path_vertebrae, constant_for
     print("Simulation is done.")
 
 
-def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_deformations_per_spine, forces_folder):
+def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_deformations_per_spine, forces_folder, anterior):
     if (txt_file == None or json_root_folder == None or vertebrae_root_folder == None):
         raise "Please provide all parameters: txt_file, json_root_folder and vertebrae_root_folder when calling the script for deformation of all spines "
         return
@@ -262,7 +274,7 @@ def deform_all_spines(txt_file, json_root_folder, vertebrae_root_folder, nr_defo
         json_path = os.path.join(json_root_folder, spine_id + ".json")
 
         for nr_deform in range(nr_deformations_per_spine):
-            force_field = get_force_field()
+            force_field = get_force_field(anterior=True)
 
             # save the current force field:
             force_fields_for_one_deformation = open(os.path.join(forces_folder, spine_id +  "_" + str(nr_deform) + ".txt"), "w")
@@ -336,10 +348,10 @@ if __name__ == '__main__':
         os.mkdir(args.forces_folder)
 
     print("Deforming spines with sofa framework")
-
+    anterior = True
     # automatically deform all spines and save vtu files, in this case use_gui is automatically set to False
     if (args.deform_all):
-        deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder)
+        deform_all_spines(args.txt_file, args.root_json_files, args.root_path_vertebrae,nr_deformations_per_spine,args.forces_folder, anterior=anterior)
     else:
         # alternatively you can choose to deform only one spine with or without GUI e.g to verify exactly how the deformation works
         spine_id = 'sub-verse807'
@@ -348,7 +360,7 @@ if __name__ == '__main__':
             path_json_file=os.path.join(
                 args.root_json_files, spine_id + ".json"),
             root_path_vertebrae=args.root_path_vertebrae,
-            constant_force_field=constant_force_fields,
+            constant_force_field=constant_force_fields_on_anterior,
             forcesID=0,
             use_gui=True,
         )

@@ -84,7 +84,7 @@ if __name__ == "__main__":
             # for each deformation merge the deformed vertebrae into one obj file
             print("Merging: " + str(spine_id) + " deformation: " +  str(deform))
             merge_obj_files(
-                look_for= "**/*" + str(spine_id) + "*forces*" + str(deform) + "*deformed*" + '*.obj',
+                look_for= "**/*" + str(spine_id) + "*forces*" + str(deform) + "*deformed_20*" + '*.obj',
                 save_to=os.path.join(args.root_path_spines,spine_id,spine_id + "forcefield" + str(deform) +"_lumbar_deformed.obj"),
                 root_path_vertebrae=args.root_path_vertebrae,
                 placeholders=placeholders

@@ -44,6 +44,22 @@ def center(spine_path, vert_paths):
         curr_vert.vertices = o3d.utility.Vector3dVector(vertices_curr_vert)
         o3d.io.write_triangle_mesh(vert_path.replace("_deformed_", "_deformed_centered_"), curr_vert)
 
+def center_all_deformed_spines_and_vertebrae_in_a_list(txt_file,nr_deform_per_spine,root_path_spines,root_path_vertebrae):
+    # iterate over spine IDS
+    with open(txt_file) as file:
+        spine_ids = [line.strip() for line in file]
+
+    for spine_id in spine_ids:
+        for deform in range(int(nr_deform_per_spine)):
+            print("Centering the spine and vertebrae of: " + str(spine_id) + " and deform " + str(deform))
+            # get the paths to the spine with current spine_id and deformation number
+            spine_mesh_path = os.path.join(root_path_spines, spine_id, get_name_deformed_spine(spine_id, deform))
+            if (not Path(spine_mesh_path).is_file()):
+                print("No deformed mesh found for spine %s and deform %d" % (spine_id, deform), file=sys.stderr)
+
+            vertebrae_mesh_paths = get_vertebrae_meshes_deformed_paths(root_path_vertebrae, spine_id, deform)
+
+            center(spine_mesh_path, vertebrae_mesh_paths)
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser(description="Center mesh")
@@ -78,18 +94,18 @@ if __name__ == '__main__':
 
     args = arg_parser.parse_args()
 
-    # iterate over spine IDS
-    with open(args.txt_file) as file:
-        spine_ids = [line.strip() for line in file]
+    center_all_deformed_spines_and_vertebrae_in_a_list(txt_file=args.txt_file,nr_deform_per_spine=args.nr_deform_per_spine,root_path_vertebrae=args.root_path_vertebrae, root_path_spines=args.root_path_spines)
 
-    for spine_id in spine_ids:
-        for deform in range(int(args.nr_deform_per_spine)):
-            print("Centering the spine and vertebrae of: " + str(spine_id) + " and deform " + str(deform))
-            # get the paths to the spine with current spine_id and deformation number
-            spine_mesh_path = os.path.join(args.root_path_spines, spine_id, get_name_deformed_spine(spine_id, deform))
-            if (not Path(spine_mesh_path).is_file()):
-                print("No deformed mesh found for spine %s and deform %d" % (spine_id, deform), file=sys.stderr)
+    """
+    spine_path = "/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/spines/patient5_ct/patient5_mesh.obj"
+    vert_paths = ["/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/vertebrae/patient5_ct_verLev20/patient5_ct_seg_verLev20_msh.obj",
+                  "/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/vertebrae/patient5_ct_verLev21/patient5_ct_seg_verLev21_msh.obj",
+                  "/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/vertebrae/patient5_ct_verLev22/patient5_ct_seg_verLev22_msh.obj",
+                  "/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/vertebrae/patient5_ct_verLev23/patient5_ct_seg_verLev23_msh.obj",
+                  "/home/miruna20/Documents/Thesis/Dataset/Patients/CT_segm/vertebrae/patient5_ct_verLev24/patient5_ct_seg_verLev24_msh.obj"
+                  ]
+    center(spine_path,vert_paths)
+    """
 
-            vertebrae_mesh_paths = get_vertebrae_meshes_deformed_paths(args.root_path_vertebrae, spine_id, deform)
 
-            center(spine_mesh_path, vertebrae_mesh_paths)
+
